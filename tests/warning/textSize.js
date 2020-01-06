@@ -1,25 +1,24 @@
 import chai from 'chai';
 import lint from '../../src/index';
 
-const warningTextSizeJSON = `{
-  "block": "warning",
-  "content": [
-      { "block": "text", "mods": { "size": "l" } },
-      { "block": "text", "mods": { "size": "m" } }
-  ]
-}`
-
-const warningTextSizeErrors = [
-  {
-    code: "WARNING.TEXT_SIZES_SHOULD_BE_EQUAL",
-    error: "Тексты в блоке warning должны быть одного размера",
-    location: {
-        start: { column: 1, line: 1 },
-        end: { column: 2, line: 22 }
-    }
-  }
-]
+const warningTextDifference = {
+  failure: `{
+    "block": "warning",
+    "content": [
+        { "block": "text", "mods": { "size": "l" } },
+        { "block": "text", "mods": { "size": "m" } }
+    ]
+  }`,
+  success: `{
+    "block": "warning",
+    "content": [
+        { "block": "text", "mods": { "size": "l" } },
+        { "block": "text", "mods": { "size": "l" } }
+    ]
+  }`
+}
 
 export default function textSize() {
-  chai.assert.equal(lint(warningTextSizeJSON).length, warningTextSizeErrors.length);
+  chai.assert.equal(lint(warningTextDifference.failure).length, 1);
+  chai.assert.equal(lint(warningTextDifference.success).length, 0);
 };

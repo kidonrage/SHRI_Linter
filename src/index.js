@@ -1,19 +1,24 @@
 import parse from 'json-to-ast';
+import LinterError from './linter/linterError';
+import Linter from './linter';
+
+import checkTextDifference from './linter/warning/textDifference';
 
 export default function lint(jsonString) {
+  const linterConfig = {
+    blocks: ['warning']
+  }
+
+  const linter = new Linter
   const settings = {
     loc: true,
   };
 
-  // return parse(jsonString, settings)
-  return [
-    {
-        code: "WARNING.TEXT_SIZES_SHOULD_BE_EQUAL",
-        error: "Тексты в блоке warning должны быть одного размера",
-        location: {
-            start: { column: 1, line: 1 },
-            end: { column: 2, line: 22 }
-        }
-    }
-  ]
+  const ast = parse(jsonString);
+
+  console.log(JSON.stringify(ast));
+
+  const errors = checkTextDifference(ast);
+
+  return errors;
 }
