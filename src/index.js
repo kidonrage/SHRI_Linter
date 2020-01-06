@@ -1,15 +1,19 @@
-const parse = require('json-to-ast');
-const { json } = require('./json');
+import parse from 'json-to-ast';
 
-function lint(jsonString) {
+export default function lint(jsonString) {
   const settings = {
-    // Appends location information. Default is <true>
     loc: true,
-    // Appends source information to node’s location. Default is <null>
-    source: 'data.json'
-  };  
+  };
 
-  return parse(jsonString, settings)
+  // return parse(jsonString, settings)
+  return [
+    {
+        code: "WARNING.TEXT_SIZES_SHOULD_BE_EQUAL",
+        error: "Тексты в блоке warning должны быть одного размера",
+        location: {
+            start: { column: 1, line: 1 },
+            end: { column: 2, line: 22 }
+        }
+    }
+  ]
 }
- 
-console.log(lint(json));

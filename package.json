@@ -4,9 +4,9 @@
   "description": "Задание 2, ШРИ 2020",
   "main": "lint.js",
   "scripts": {
-    "start": "nodemon src/index.js",
+    "start": "nodemon --exec babel-node src/index.js",
     "build": "browserify src/index.js -o build/linter.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha tests/lint.js --require @babel/register"
   },
   "repository": {
     "type": "git",
@@ -22,7 +22,11 @@
   "devDependencies": {
     "@babel/core": "^7.7.7",
     "@babel/node": "^7.7.7",
+    "@babel/preset-env": "^7.7.7",
+    "@babel/register": "^7.7.7",
     "browserify": "^16.5.0",
+    "chai": "^4.2.0",
+    "mocha": "^7.0.0",
     "nodemon": "^2.0.2"
   },
   "dependencies": {
