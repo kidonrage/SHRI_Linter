@@ -2752,43 +2752,159 @@ return parse$1;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],2:[function(require,module,exports){
-const parse = require('json-to-ast');
-const { json } = require('./lint');
+"use strict";
 
-const settings = {
-  // Appends location information. Default is <true>
-  loc: true,
-  // Appends source information to node’s location. Default is <null>
-  source: 'data.json'
-};
- 
-console.log(parse(json, settings));
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = lint;
 
-},{"./lint":3,"json-to-ast":1}],3:[function(require,module,exports){
-const json = `{
-  "block": "warning",
-  "content": [
-    {
-      "block": "placeholder",
-      "mods": { "size": "m" }
-    },
-    {
-      "elem": "content",
-      "content": [
-        {
-          "block": "text",
-          "mods": { "size": "m" }
-        },
-        {
-          "block": "text",
-          "mods": { "size": "l" }
-        }
-      ]
-    }
-  ]
-}`;
+var _jsonToAst = _interopRequireDefault(require("json-to-ast"));
 
-module.exports = {
-  json
+var _linterError = _interopRequireDefault(require("./linter/linterError"));
+
+var _linter = _interopRequireDefault(require("./linter"));
+
+var _textDifference = _interopRequireDefault(require("./linter/warning/textDifference"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function lint(jsonString) {
+  const linterConfig = {
+    blocks: ['warning']
+  };
+  const linter = new _linter.default();
+  const settings = {
+    loc: true
+  };
+  const ast = (0, _jsonToAst.default)(jsonString);
+  console.log(JSON.stringify(ast));
+  const errors = (0, _textDifference.default)(ast);
+  return errors;
 }
-},{}]},{},[2]);
+
+},{"./linter":3,"./linter/linterError":5,"./linter/warning/textDifference":7,"json-to-ast":1}],3:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _linter = _interopRequireDefault(require("./linter"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var _default = _linter.default;
+exports.default = _default;
+
+},{"./linter":4}],4:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+class Linter {
+  constructor(configuration) {}
+
+}
+
+exports.default = Linter;
+
+},{}],5:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+class LinterError {
+  constructor(code = '', error = '', astLocation) {
+    this.error = error;
+    this.code = code;
+    const {
+      line: startLine,
+      column: startColumn
+    } = astLocation.start;
+    const {
+      line: endLine,
+      column: endColumn
+    } = astLocation.end;
+    this.location = {
+      start: {
+        column: startColumn,
+        line: startLine
+      },
+      end: {
+        column: endColumn,
+        line: endLine
+      }
+    };
+  }
+
+}
+
+exports.default = LinterError;
+
+},{}],6:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getContentOf = getContentOf;
+exports.getModValuesOf = getModValuesOf;
+
+function getContentOf(block) {
+  const contentValue = getChildValue(block, 'content');
+  return contentValue.children;
+}
+
+function getModValuesOf(blocks, modName) {
+  const values = blocks.map(block => {
+    const mods = getChildValue(block, 'mods');
+    const resultMod = mods.children.find(mod => mod.key.value === modName);
+    return resultMod.value.value;
+  });
+  return values;
+}
+
+function getChildValue(block, childKey) {
+  const childIndex = block.children.map(child => child.key.value).indexOf(childKey);
+  return block.children[childIndex].value;
+}
+
+},{}],7:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _linterError = _interopRequireDefault(require("../linterError"));
+
+var _linterService = require("../linterService");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function checkTextDifference(warningBlock) {
+  const content = (0, _linterService.getContentOf)(warningBlock);
+  const textSizes = (0, _linterService.getModValuesOf)(content, 'size');
+  const isSizesEqual = textSizes.every(size => size === textSizes[0]);
+
+  if (!isSizesEqual) {
+    const error = new _linterError.default("WARNING.TEXT_SIZES_SHOULD_BE_EQUAL", "Тексты в блоке warning должны быть одного размера", warningBlock.loc);
+    return [error];
+  }
+
+  return [];
+}
+
+var _default = checkTextDifference;
+exports.default = _default;
+
+},{"../linterError":5,"../linterService":6}]},{},[2]);
