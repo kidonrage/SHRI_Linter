@@ -1,0 +1,31 @@
+{
+  "name": "SHRI_Linter",
+  "version": "1.0.0",
+  "description": "Задание 2, ШРИ 2020",
+  "main": "lint.js",
+  "scripts": {
+    "start": "nodemon src/index.js",
+    "build": "browserify src/index.js -o build/linter.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kidonrage/SHRI_Linter.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kidonrage/SHRI_Linter/issues"
+  },
+  "homepage": "https://github.com/kidonrage/SHRI_Linter#readme",
+  "devDependencies": {
+    "@babel/core": "^7.7.7",
+    "@babel/node": "^7.7.7",
+    "browserify": "^16.5.0",
+    "nodemon": "^2.0.2"
+  },
+  "dependencies": {
+    "json-to-ast": "^2.1.0"
+  }
+}
