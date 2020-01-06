@@ -1,6 +1,5 @@
-import parse from 'json-to-ast';
-import LinterError from './linter/linterError';
 import Linter from './linter';
+import {getBlocks} from './services/blocksService';
 
 import checkTextDifference from './linter/warning/textDifference';
 
@@ -8,17 +7,13 @@ export default function lint(jsonString) {
   const linterConfig = {
     blocks: ['warning']
   }
+  const linter = new Linter(linterConfig);
 
-  const linter = new Linter
-  const settings = {
-    loc: true,
-  };
+  const blocks = getBlocks(jsonString);
 
-  const ast = parse(jsonString);
+  const errors = linter.lint(blocks);
 
-  console.log(JSON.stringify(ast));
-
-  const errors = checkTextDifference(ast);
+  console.log(errors);
 
   return errors;
 }

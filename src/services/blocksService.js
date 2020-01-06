@@ -92,13 +92,19 @@ function getBlocksWithLocation(blocks, astBlocks) {
   return blockWithLocation;
 }
 
-export function getBlocks(json) {
+export function getBlocks(jsonString) {
+  const json = JSON.parse(jsonString);
   const blocksList = convertTreeToList(json);
 
   const ast = parse(jsonString);
   const astBlocksList = convertAstTreeToList(ast);
 
   const blocksWithLocation = getBlocksWithLocation(blocksList, astBlocksList);
-  
   return blocksWithLocation;
+}
+
+export function findBlocksIn(blocks, blockName) {
+  return blocks.filter((block) => {
+    return block.block === blockName;
+  })
 }
