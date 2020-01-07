@@ -2759,13 +2759,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = lint;
 
-var _jsonToAst = _interopRequireDefault(require("json-to-ast"));
-
-var _linterError = _interopRequireDefault(require("./linter/linterError"));
-
 var _linter = _interopRequireDefault(require("./linter"));
 
-var _textDifference = _interopRequireDefault(require("./linter/warning/textDifference"));
+var _blocksService = require("./services/blocksService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -2773,17 +2769,14 @@ function lint(jsonString) {
   const linterConfig = {
     blocks: ['warning']
   };
-  const linter = new _linter.default();
-  const settings = {
-    loc: true
-  };
-  const ast = (0, _jsonToAst.default)(jsonString);
-  console.log(JSON.stringify(ast));
-  const errors = (0, _textDifference.default)(ast);
+  const linter = new _linter.default(linterConfig);
+  const blocks = (0, _blocksService.getBlocks)(jsonString);
+  const errors = linter.lint(blocks);
+  console.log(errors);
   return errors;
 }
 
-},{"./linter":3,"./linter/linterError":5,"./linter/warning/textDifference":7,"json-to-ast":1}],3:[function(require,module,exports){
+},{"./linter":3,"./services/blocksService":8}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2806,14 +2799,40 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+var _linterError = _interopRequireDefault(require("./linterError"));
+
+var _blocksService = require("../services/blocksService");
+
+var _textDifference = _interopRequireDefault(require("./warning/textDifference"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 class Linter {
-  constructor(configuration) {}
+  constructor(configuration) {
+    this.blocksToCheck = configuration.blocks;
+  }
+
+  lint(blocks) {
+    const errors = this.blocksToCheck.map(blockName => {
+      const blocksToCheck = (0, _blocksService.findBlocksIn)(blocks, blockName);
+      return this[blockName](blocksToCheck);
+    });
+    const filteredErrors = [].concat(...errors).filter(error => error != null);
+    return filteredErrors;
+  }
+
+  warning(blocks) {
+    const errors = blocks.map(block => {
+      return (0, _textDifference.default)(block);
+    });
+    return errors;
+  }
 
 }
 
 exports.default = Linter;
 
-},{}],5:[function(require,module,exports){
+},{"../services/blocksService":8,"./linterError":5,"./warning/textDifference":7}],5:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2887,24 +2906,162 @@ exports.default = void 0;
 
 var _linterError = _interopRequireDefault(require("../linterError"));
 
+var _blocksService = require("../../services/blocksService");
+
 var _linterService = require("../linterService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkTextDifference(warningBlock) {
-  const content = (0, _linterService.getContentOf)(warningBlock);
-  const textSizes = (0, _linterService.getModValuesOf)(content, 'size');
+  const nodes = (0, _blocksService.convertTreeToList)(warningBlock); // const content = getContentOf(warningBlock);
+  // const textSizes = getModValuesOf(content, 'size');
+
+  const textBlocks = nodes.filter(node => {
+    return node.block === 'text';
+  });
+  const textSizes = textBlocks.map(block => {
+    return block.mods.size;
+  });
   const isSizesEqual = textSizes.every(size => size === textSizes[0]);
 
   if (!isSizesEqual) {
     const error = new _linterError.default("WARNING.TEXT_SIZES_SHOULD_BE_EQUAL", "Тексты в блоке warning должны быть одного размера", warningBlock.loc);
-    return [error];
+    return error;
   }
 
-  return [];
+  return null;
 }
 
 var _default = checkTextDifference;
 exports.default = _default;
 
-},{"../linterError":5,"../linterService":6}]},{},[2]);
+},{"../../services/blocksService":8,"../linterError":5,"../linterService":6}],8:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.convertTreeToList = convertTreeToList;
+exports.getBlocks = getBlocks;
+exports.findBlocksIn = findBlocksIn;
+
+var _jsonToAst = _interopRequireDefault(require("json-to-ast"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function convertTreeToList(root) {
+  var stack = [],
+      array = [];
+  stack.push(root);
+
+  while (stack.length !== 0) {
+    var node = stack.pop();
+    array.push(node);
+
+    if (!node.content) {
+      continue;
+    } else {
+      for (var i = node.content.length - 1; i >= 0; i--) {
+        stack.push(node.content[i]);
+      }
+    }
+  }
+
+  return array;
+}
+
+function isBlock(node) {
+  const childrenKeys = node.children.map(child => {
+    return child.key.value;
+  });
+
+  if (childrenKeys.includes('block')) {
+    return true;
+  }
+
+  return false;
+}
+
+function getChildrenOf(node) {
+  const contentProperty = node.children.find(child => {
+    return child.key.value === 'content';
+  });
+
+  if (!contentProperty) {
+    return [];
+  }
+
+  return contentProperty.value.children;
+}
+
+function convertAstTreeToList(root) {
+  var stack = [],
+      array = [];
+  stack.push(root);
+
+  while (stack.length !== 0) {
+    var node = stack.pop();
+    array.push(node); // if (isBlock(node)) {
+    //   array.push(node);
+    // } else {
+    //   console.log('not a block', node)
+    // }
+
+    const nodeChildren = getChildrenOf(node);
+
+    if (nodeChildren.length === 0) {
+      continue;
+    } else {
+      for (var i = nodeChildren.length - 1; i >= 0; i--) {
+        stack.push(nodeChildren[i]);
+      }
+    }
+  }
+
+  return array;
+}
+
+function getBlocksWithLocation(blocks, astBlocks) {
+  const blockWithLocation = blocks.map((block, index) => {
+    let result = block;
+    const astBlock = astBlocks[index];
+
+    if (result.content) {
+      const astChildren = getChildrenOf(astBlock);
+      const contentWithLoc = result.content.map((contentBlock, index) => {
+        const {
+          loc
+        } = astChildren[index];
+        return { ...contentBlock,
+          loc
+        };
+      });
+      result.content = contentWithLoc;
+    }
+
+    const {
+      loc
+    } = astBlock;
+    return { ...result,
+      loc
+    };
+  });
+  return blockWithLocation;
+}
+
+function getBlocks(jsonString) {
+  const json = JSON.parse(jsonString);
+  const blocksList = convertTreeToList(json);
+  const ast = (0, _jsonToAst.default)(jsonString);
+  const astBlocksList = convertAstTreeToList(ast);
+  const blocksWithLocation = getBlocksWithLocation(blocksList, astBlocksList);
+  return blocksWithLocation;
+}
+
+function findBlocksIn(blocks, blockName) {
+  return blocks.filter(block => {
+    return block.block === blockName;
+  });
+}
+
+},{"json-to-ast":1}]},{},[2]);

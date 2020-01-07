@@ -1,6 +1,6 @@
 import parse from 'json-to-ast';
 
-function convertTreeToList(root) {
+export function convertTreeToList(root) {
   var stack = [], array = [];
   stack.push(root);
 
@@ -51,9 +51,13 @@ function convertAstTreeToList(root) {
   while(stack.length !== 0) {
       var node = stack.pop();
 
-      if (isBlock(node)) {
-        array.push(node);
-      }
+      array.push(node);
+
+      // if (isBlock(node)) {
+      //   array.push(node);
+      // } else {
+      //   console.log('not a block', node)
+      // }
 
       const nodeChildren = getChildrenOf(node);
 

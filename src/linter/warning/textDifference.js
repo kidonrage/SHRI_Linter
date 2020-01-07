@@ -1,11 +1,13 @@
 import LinterError from '../linterError';
+import {convertTreeToList} from '../../services/blocksService';
 import {getContentOf, getModValuesOf} from '../linterService';
 
 function checkTextDifference(warningBlock) {
+  const nodes = convertTreeToList(warningBlock);
   // const content = getContentOf(warningBlock);
   // const textSizes = getModValuesOf(content, 'size');
-  const textBlocks = warningBlock.content.filter((block) => {
-    return block.block === 'text';
+  const textBlocks = nodes.filter((node) => {
+    return node.block === 'text';
   });
   const textSizes = textBlocks.map((block) => {
     return block.mods.size;
