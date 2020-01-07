@@ -1,5 +1,6 @@
 import LinterError from './linterError';
 import {findBlocksIn} from '../services/blocksService';
+import checkTextDifference from './warning/textDifference';
 
 export default class Linter {
 
@@ -13,27 +14,17 @@ export default class Linter {
       return this[blockName](blocksToCheck)
     })
 
-    return errors;
+    const filteredErrors = [].concat(...errors).filter((error) => error != null)
+
+    return filteredErrors;
   }
 
   warning(blocks) {
-    const error = new LinterError(
-      "WARNING.TEXT_SIZES_SHOULD_BE_EQUAL",
-      "Тексты в блоке warning должны быть одного размера",
-      {
-        start: {
-          line: 1,
-          column: 1
-        },
-        end: {
-          line: 7,
-          column: 2
-        }
-      }
-      // warningBlock.loc
-    )
-  
-    return [error];
+    const errors = blocks.map((block) => {
+      return checkTextDifference(block);
+    });
+
+    return errors;
   }
 
 }

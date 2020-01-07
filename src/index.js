@@ -1,11 +1,11 @@
 import Linter from './linter';
 import {getBlocks} from './services/blocksService';
 
-import checkTextDifference from './linter/warning/textDifference';
-
 export default function lint(jsonString) {
   const linterConfig = {
-    blocks: ['warning']
+    blocks: [
+      'warning'
+    ]
   }
   const linter = new Linter(linterConfig);
 

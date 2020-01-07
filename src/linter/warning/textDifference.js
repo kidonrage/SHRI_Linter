@@ -2,8 +2,14 @@ import LinterError from '../linterError';
 import {getContentOf, getModValuesOf} from '../linterService';
 
 function checkTextDifference(warningBlock) {
-  const content = getContentOf(warningBlock);
-  const textSizes = getModValuesOf(content, 'size');
+  // const content = getContentOf(warningBlock);
+  // const textSizes = getModValuesOf(content, 'size');
+  const textBlocks = warningBlock.content.filter((block) => {
+    return block.block === 'text';
+  });
+  const textSizes = textBlocks.map((block) => {
+    return block.mods.size;
+  })
 
   const isSizesEqual = textSizes.every( size => size === textSizes[0] )
 
@@ -14,10 +20,10 @@ function checkTextDifference(warningBlock) {
       warningBlock.loc
     )
   
-    return [error];
+    return error;
   }
 
-  return [];
+  return null;
 }
 
 export default checkTextDifference;
