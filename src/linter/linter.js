@@ -20,12 +20,13 @@ export default class Linter {
   }
 
   warning(blocks) {
-    const {checkTextDifference, checkButtonSize} = warningCheckers;
+    const {textDifference, buttonSize, buttonPosition} = warningCheckers;
 
     const errors = blocks.map((block) => {
       return [
-        checkTextDifference(block),
-        checkButtonSize(block)
+        textDifference(block),
+        buttonSize(block),
+        buttonPosition(block)
       ]
     });
 

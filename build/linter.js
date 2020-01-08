@@ -2780,7 +2780,7 @@ function lint(jsonString) {
 global.lint = lint;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./linter":6,"./services/blocksService":11}],3:[function(require,module,exports){
+},{"./linter":6,"./services/blocksService":12}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2827,9 +2827,13 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 
 class LinterError {
-  constructor(code = '', error = '', astLocation) {
-    this.error = error;
+  constructor(errorInfo, astLocation) {
+    const {
+      desc,
+      code
+    } = errorInfo;
     this.code = code;
+    this.error = desc;
     const {
       line: startLine,
       column: startColumn
@@ -2895,16 +2899,17 @@ class Linter {
     }); // 2d blocks errors array to 1d
 
     const flatErrors = [].concat(...errors);
-    return filteredErrors;
+    return flatErrors;
   }
 
   warning(blocks) {
     const {
-      checkTextDifference,
-      checkButtonSize
+      textDifference,
+      buttonSize,
+      buttonPosition
     } = _warning.default;
     const errors = blocks.map(block => {
-      return [checkTextDifference(block), checkButtonSize(block)];
+      return [textDifference(block), buttonSize(block), buttonPosition(block)];
     }); // 2d warning errors array to 1d
 
     const flatErrors = [].concat(...errors).filter(error => error != null);
@@ -2915,7 +2920,51 @@ class Linter {
 
 exports.default = Linter;
 
-},{"../services/blocksService":11,"./warning/":9}],8:[function(require,module,exports){
+},{"../services/blocksService":12,"./warning/":10}],8:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _linterError = _interopRequireDefault(require("../errors/linterError"));
+
+var _errorsList = require("../errors/errorsList");
+
+var _blocksService = require("../../services/blocksService");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function checkButtonPosition(warningBlock) {
+  const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
+  const button = nodes.find(node => {
+    return node.block === 'button';
+  });
+  const placeholder = nodes.find(node => {
+    return node.block === 'placeholder';
+  });
+
+  if (!button || !placeholder) {
+    return null;
+  }
+
+  const buttonIndex = nodes.indexOf(button);
+  const placeholderIndex = nodes.indexOf(placeholder);
+  const isPositionValid = buttonIndex > placeholderIndex;
+
+  if (!isPositionValid) {
+    const error = new _linterError.default(_errorsList.warning.buttonPosition, button.location);
+    return error;
+  }
+
+  return null;
+}
+
+var _default = checkButtonPosition;
+exports.default = _default;
+
+},{"../../services/blocksService":12,"../errors/errorsList":4,"../errors/linterError":5}],9:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2935,27 +2984,26 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function checkButtonSize(warningBlock) {
   const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
-  const buttons = nodes.filter(node => {
+  const button = nodes.find(node => {
     return node.block === 'button';
   });
   const firstTextBlock = nodes.find(node => {
     return node.block === 'text';
   });
+
+  if (!button || !firstTextBlock) {
+    return null;
+  }
+
   const standardSize = firstTextBlock.mods.size;
 
   const standardSizeIdx = _sizes.default.indexOf(standardSize);
 
-  const buttonSizes = buttons.map(button => {
-    return button.mods.size;
-  });
-  const isSizesValid = buttonSizes.every(size => size === _sizes.default[standardSizeIdx + 1]);
+  const buttonSize = button.mods.size;
+  const isSizesValid = buttonSize === _sizes.default[standardSizeIdx + 1];
 
   if (!isSizesValid) {
-    const {
-      code,
-      desc
-    } = _errorsList.warning.buttonSize;
-    const error = new _linterError.default(code, desc, warningBlock.location);
+    const error = new _linterError.default(_errorsList.warning.buttonSize, button.location);
     return error;
   }
 
@@ -2965,7 +3013,7 @@ function checkButtonSize(warningBlock) {
 var _default = checkButtonSize;
 exports.default = _default;
 
-},{"../../services/blocksService":11,"../enums/sizes":3,"../errors/errorsList":4,"../errors/linterError":5}],9:[function(require,module,exports){
+},{"../../services/blocksService":12,"../enums/sizes":3,"../errors/errorsList":4,"../errors/linterError":5}],10:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2977,16 +3025,19 @@ var _textDifference = _interopRequireDefault(require("./textDifference"));
 
 var _buttonSize = _interopRequireDefault(require("./buttonSize"));
 
+var _buttonPosition = _interopRequireDefault(require("./buttonPosition"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const checkers = {
-  checkTextDifference: _textDifference.default,
-  checkButtonSize: _buttonSize.default
+  textDifference: _textDifference.default,
+  buttonSize: _buttonSize.default,
+  buttonPosition: _buttonPosition.default
 };
 var _default = checkers;
 exports.default = _default;
 
-},{"./buttonSize":8,"./textDifference":10}],10:[function(require,module,exports){
+},{"./buttonPosition":8,"./buttonSize":9,"./textDifference":11}],11:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3013,11 +3064,7 @@ function checkTextDifference(warningBlock) {
   const isSizesEqual = textSizes.every(size => size === textSizes[0]);
 
   if (!isSizesEqual) {
-    const {
-      code,
-      desc
-    } = _errorsList.warning.textSize;
-    const error = new _linterError.default(code, desc, warningBlock.location);
+    const error = new _linterError.default(_errorsList.warning.textSize, warningBlock.location);
     return error;
   }
 
@@ -3027,7 +3074,7 @@ function checkTextDifference(warningBlock) {
 var _default = checkTextDifference;
 exports.default = _default;
 
-},{"../../services/blocksService":11,"../errors/errorsList":4,"../errors/linterError":5}],11:[function(require,module,exports){
+},{"../../services/blocksService":12,"../errors/errorsList":4,"../errors/linterError":5}],12:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
