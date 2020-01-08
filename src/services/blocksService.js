@@ -114,7 +114,14 @@ export function getBlocks(jsonString) {
     return [];  
   }
 
-  const json = JSON.parse(jsonString);
+  let json = {};
+  try {
+    json = JSON.parse(jsonString);
+  } catch(e) {
+    console.log('Invalid JSON');
+    return []
+  }
+  
   const blocksList = convertTreeToList(json);
 
   const ast = parse(jsonString);
