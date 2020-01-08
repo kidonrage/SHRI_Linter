@@ -1,4 +1,3 @@
-import LinterError from './linterError';
 import {findBlocksIn} from '../services/blocksService';
 import checkTextDifference from './warning/textDifference';
 

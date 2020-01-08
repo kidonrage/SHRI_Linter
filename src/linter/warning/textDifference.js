@@ -1,11 +1,9 @@
-import LinterError from '../linterError';
+import LinterError from '../errors/linterError';
+import {warning as warningErrors} from '../errors/errorsList';
 import {convertTreeToList} from '../../services/blocksService';
-import {getContentOf, getModValuesOf} from '../linterService';
 
 function checkTextDifference(warningBlock) {
   const nodes = convertTreeToList(warningBlock);
-  // const content = getContentOf(warningBlock);
-  // const textSizes = getModValuesOf(content, 'size');
   const textBlocks = nodes.filter((node) => {
     return node.block === 'text';
   });
@@ -16,9 +14,11 @@ function checkTextDifference(warningBlock) {
   const isSizesEqual = textSizes.every( size => size === textSizes[0] )
 
   if (!isSizesEqual) {
+    const {code, desc} = warningErrors.textSize;
+    
     const error = new LinterError(
-      "WARNING.TEXT_SIZES_SHOULD_BE_EQUAL",
-      "Тексты в блоке warning должны быть одного размера",
+      code,
+      desc,
       warningBlock.location
     )
   
