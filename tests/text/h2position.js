@@ -46,6 +46,45 @@ const testInputs = [
       }
     ]`,
     expectedErrors: 1
+  },
+  {
+    json: `[
+      {
+          "block": "text",
+          "mods": { "type": "h2" }
+      },
+      {
+        "block": "text",
+        "mods": { "type": "h2" }
+      },
+      {
+          "block": "text",
+          "mods": { "type": "h1" }
+      }
+    ]`,
+    expectedErrors: 2
+  },
+  {
+    json: `[
+      {
+        "block": "parent",
+        "content": [
+          {
+            "block": "text",
+            "mods": { "type": "h2" }
+          }
+        ]
+      },
+      {
+        "block": "text",
+        "mods": { "type": "h2" }
+      },
+      {
+          "block": "text",
+          "mods": { "type": "h1" }
+      }
+    ]`,
+    expectedErrors: 2
   }
 ]
 
