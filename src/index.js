@@ -2,16 +2,12 @@ import Linter from './linter';
 import {getBlocks} from './services/blocksService';
 
 export default function lint(jsonString) {
-  const linterConfig = {
-    blocks: [
-      'warning'
-    ]
-  }
-  const linter = new Linter(linterConfig);
+  const linter = new Linter();
 
   const blocks = getBlocks(jsonString);
 
   const errors = linter.lint(blocks);
+  console.log(errors);
 
   return errors;
 }

@@ -55,10 +55,11 @@ export default class Linter {
   }
 
   text(blocks) {
-    const {h1Severalty} = textCheckers;
+    const {h1Severalty, h2Position} = textCheckers;
 
     const errors = [
-      ...h1Severalty(blocks)
+      ...h1Severalty(blocks),
+      ...h2Position(blocks),
     ]
 
     const flatErrors = [].concat(...errors).filter((error) => error != null);
