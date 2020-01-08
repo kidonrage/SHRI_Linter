@@ -2810,7 +2810,7 @@ const warning = {
     desc: 'Размер кнопки блока warning должен быть на 1 шаг больше эталонного.'
   },
   buttonPosition: {
-    code: 'INVALID_BUTTON_POSITION',
+    code: 'WARNING.INVALID_BUTTON_POSITION',
     desc: 'Блок button в блоке warning не может находиться перед блоком placeholder на том же или более глубоком уровне вложенности.'
   },
   placeholderSize: {
