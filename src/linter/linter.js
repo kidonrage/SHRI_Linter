@@ -1,9 +1,17 @@
 import {findBlocksIn} from '../services/blocksService';
-import warningCheckers from './warning/';
+import warningCheckers from './warning';
+import textCheckers from './text';
+
+const defaultConfig = {
+  blocks: [
+    'warning',
+    'text'
+  ]
+}
 
 export default class Linter {
 
-  constructor(configuration) {
+  constructor(configuration = defaultConfig) {
     this.blocksToCheck = configuration.blocks;
   }
 
@@ -13,8 +21,7 @@ export default class Linter {
     }
 
     const errors = this.blocksToCheck.map((blockName) => {
-      const blocksToCheck = findBlocksIn(blocks, blockName);
-      return this[blockName](blocksToCheck)
+      return this[blockName](blocks)
     })
 
     // 2d blocks errors array to 1d
@@ -26,7 +33,13 @@ export default class Linter {
   warning(blocks) {
     const {textDifference, buttonSize, buttonPosition, placeholderSize} = warningCheckers;
 
-    const errors = blocks.map((block) => {
+    const blocksToCheck = findBlocksIn(blocks, 'warning');
+
+    if (!blocksToCheck) {
+      return [];
+    }
+
+    const errors = blocksToCheck.map((block) => {
       return [
         textDifference(block),
         buttonSize(block),
@@ -36,7 +49,19 @@ export default class Linter {
     });
 
     // 2d warning errors array to 1d
-    const flatErrors = [].concat(...errors).filter((error) => error != null)
+    const flatErrors = [].concat(...errors).filter((error) => error != null);
+
+    return flatErrors;
+  }
+
+  text(blocks) {
+    const {h1Severalty} = textCheckers;
+
+    const errors = [
+      ...h1Severalty(blocks)
+    ]
+
+    const flatErrors = [].concat(...errors).filter((error) => error != null);
 
     return flatErrors;
   }
