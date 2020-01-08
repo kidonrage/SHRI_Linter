@@ -3,16 +3,6 @@ import lint from '../../src/index';
 
 const testInputs = [
   {
-    // json: `[
-    //   {
-    //       "block": "text",
-    //       "mods": { "type": "h1" }
-    //   },
-    //   {
-    //       "block": "text",
-    //       "mods": { "type": "h1" }
-    //   }
-    // ]`,
     json: `{
       "block": "page",
       "content": [
@@ -39,7 +29,20 @@ const testInputs = [
       ]
     }`,
     expectedErrors: 0
-  }
+  },
+  {
+    json: `[
+      {
+          "block": "text",
+          "mods": { "type": "h1", "lol": "lol" }
+      },
+      {
+          "block": "text",
+          "mods": { "type": "h1" }
+      }
+    ]`,
+    expectedErrors: 1
+  },
 ]
 
 export default function h1Several() {

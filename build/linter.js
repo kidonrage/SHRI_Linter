@@ -2767,10 +2767,7 @@ var _blocksService = require("./services/blocksService");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function lint(jsonString) {
-  const linterConfig = {
-    blocks: ['warning']
-  };
-  const linter = new _linter.default(linterConfig);
+  const linter = new _linter.default();
   const blocks = (0, _blocksService.getBlocks)(jsonString);
   const errors = linter.lint(blocks);
   console.log(errors);
@@ -2780,7 +2777,7 @@ function lint(jsonString) {
 global.lint = lint;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./linter":6,"./services/blocksService":13}],3:[function(require,module,exports){
+},{"./linter":7,"./services/blocksService":16}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2794,33 +2791,6 @@ var _default = sizes;
 exports.default = _default;
 
 },{}],4:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.warning = void 0;
-const warning = {
-  textSize: {
-    code: 'WARNING.TEXT_SIZES_SHOULD_BE_EQUAL',
-    desc: 'Тексты в блоке warning должны быть одного размера.'
-  },
-  buttonSize: {
-    code: 'WARNING.INVALID_BUTTON_SIZE',
-    desc: 'Размер кнопки блока warning должен быть на 1 шаг больше эталонного.'
-  },
-  buttonPosition: {
-    code: 'WARNING.INVALID_BUTTON_POSITION',
-    desc: 'Блок button в блоке warning не может находиться перед блоком placeholder на том же или более глубоком уровне вложенности.'
-  },
-  placeholderSize: {
-    code: 'WARNING.INVALID_PLACEHOLDER_SIZE',
-    desc: 'Допустимые размеры для блока placeholder в блоке warning: s, m, l.'
-  }
-};
-exports.warning = warning;
-
-},{}],5:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2860,7 +2830,59 @@ class LinterError {
 
 exports.default = LinterError;
 
+},{}],5:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+const text = {
+  severalH1: {
+    code: 'TEXT.SEVERAL_H1',
+    desc: 'Заголовок первого уровня на странице должен быть единственным.'
+  },
+  h2Position: {
+    code: 'TEXT.INVALID_H2_POSITION',
+    desc: 'Заголовок второго уровня не может находиться перед заголовком первого уровня на том же или более глубоком уровне вложенности.'
+  },
+  h3Position: {
+    code: 'TEXT.INVALID_H3_POSITION',
+    desc: 'Заголовок третьего уровня не может находиться перед заголовком второго уровня на том же или более глубоком уровне вложенности.'
+  }
+};
+var _default = text;
+exports.default = _default;
+
 },{}],6:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+const warning = {
+  textSize: {
+    code: 'WARNING.TEXT_SIZES_SHOULD_BE_EQUAL',
+    desc: 'Тексты в блоке warning должны быть одного размера.'
+  },
+  buttonSize: {
+    code: 'WARNING.INVALID_BUTTON_SIZE',
+    desc: 'Размер кнопки блока warning должен быть на 1 шаг больше эталонного.'
+  },
+  buttonPosition: {
+    code: 'WARNING.INVALID_BUTTON_POSITION',
+    desc: 'Блок button в блоке warning не может находиться перед блоком placeholder на том же или более глубоком уровне вложенности.'
+  },
+  placeholderSize: {
+    code: 'WARNING.INVALID_PLACEHOLDER_SIZE',
+    desc: 'Допустимые размеры для блока placeholder в блоке warning: s, m, l.'
+  }
+};
+var _default = warning;
+exports.default = _default;
+
+},{}],7:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2875,7 +2897,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var _default = _linter.default;
 exports.default = _default;
 
-},{"./linter":7}],7:[function(require,module,exports){
+},{"./linter":8}],8:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2885,12 +2907,18 @@ exports.default = void 0;
 
 var _blocksService = require("../services/blocksService");
 
-var _warning = _interopRequireDefault(require("./warning/"));
+var _warning = _interopRequireDefault(require("./warning"));
+
+var _text = _interopRequireDefault(require("./text"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+const defaultConfig = {
+  blocks: ['warning', 'text']
+};
+
 class Linter {
-  constructor(configuration) {
+  constructor(configuration = defaultConfig) {
     this.blocksToCheck = configuration.blocks;
   }
 
@@ -2900,8 +2928,7 @@ class Linter {
     }
 
     const errors = this.blocksToCheck.map(blockName => {
-      const blocksToCheck = (0, _blocksService.findBlocksIn)(blocks, blockName);
-      return this[blockName](blocksToCheck);
+      return this[blockName](blocks);
     }); // 2d blocks errors array to 1d
 
     const flatErrors = [].concat(...errors);
@@ -2915,10 +2942,25 @@ class Linter {
       buttonPosition,
       placeholderSize
     } = _warning.default;
-    const errors = blocks.map(block => {
+    const blocksToCheck = (0, _blocksService.findBlocksIn)(blocks, 'warning');
+
+    if (!blocksToCheck) {
+      return [];
+    }
+
+    const errors = blocksToCheck.map(block => {
       return [textDifference(block), buttonSize(block), buttonPosition(block), placeholderSize(block)];
     }); // 2d warning errors array to 1d
 
+    const flatErrors = [].concat(...errors).filter(error => error != null);
+    return flatErrors;
+  }
+
+  text(blocks) {
+    const {
+      h1Severalty
+    } = _text.default;
+    const errors = [...h1Severalty(blocks)];
     const flatErrors = [].concat(...errors).filter(error => error != null);
     return flatErrors;
   }
@@ -2927,7 +2969,7 @@ class Linter {
 
 exports.default = Linter;
 
-},{"../services/blocksService":13,"./warning/":10}],8:[function(require,module,exports){
+},{"../services/blocksService":16,"./text":10,"./warning":13}],9:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2937,7 +2979,66 @@ exports.default = void 0;
 
 var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
-var _errorsList = require("../errors/errorsList");
+var _text = _interopRequireDefault(require("../errors/text"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function checkH1Severalty(blocks) {
+  const h1Headers = blocks.filter(block => {
+    return block.block === 'text' && block.mods.type === 'h1';
+  });
+
+  if (h1Headers.length < 1) {
+    return [];
+  }
+
+  const isHeadersValid = h1Headers.length === 1;
+
+  if (!isHeadersValid) {
+    console.log(h1Headers[0].location);
+    const errors = h1Headers.slice(1).map(invalidHeader => {
+      const error = new _linterError.default(_text.default.severalH1, invalidHeader.location);
+      console.log(invalidHeader.location);
+      return error;
+    });
+    return errors;
+  }
+
+  return [];
+}
+
+var _default = checkH1Severalty;
+exports.default = _default;
+
+},{"../errors/linterError":4,"../errors/text":5}],10:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _h1several = _interopRequireDefault(require("./h1several"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const checkers = {
+  h1Severalty: _h1several.default
+};
+var _default = checkers;
+exports.default = _default;
+
+},{"./h1several":9}],11:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _linterError = _interopRequireDefault(require("../errors/linterError"));
+
+var _warning = _interopRequireDefault(require("../errors/warning"));
 
 var _blocksService = require("../../services/blocksService");
 
@@ -2961,7 +3062,7 @@ function checkButtonPosition(warningBlock) {
   const isPositionValid = buttonIndex > placeholderIndex;
 
   if (!isPositionValid) {
-    const error = new _linterError.default(_errorsList.warning.buttonPosition, button.location);
+    const error = new _linterError.default(_warning.default.buttonPosition, button.location);
     return error;
   }
 
@@ -2971,7 +3072,7 @@ function checkButtonPosition(warningBlock) {
 var _default = checkButtonPosition;
 exports.default = _default;
 
-},{"../../services/blocksService":13,"../errors/errorsList":4,"../errors/linterError":5}],9:[function(require,module,exports){
+},{"../../services/blocksService":16,"../errors/linterError":4,"../errors/warning":6}],12:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2981,7 +3082,7 @@ exports.default = void 0;
 
 var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
-var _errorsList = require("../errors/errorsList");
+var _warning = _interopRequireDefault(require("../errors/warning"));
 
 var _blocksService = require("../../services/blocksService");
 
@@ -3010,7 +3111,7 @@ function checkButtonSize(warningBlock) {
   const isSizesValid = buttonSize === _sizes.default[standardSizeIdx + 1];
 
   if (!isSizesValid) {
-    const error = new _linterError.default(_errorsList.warning.buttonSize, button.location);
+    const error = new _linterError.default(_warning.default.buttonSize, button.location);
     return error;
   }
 
@@ -3020,7 +3121,7 @@ function checkButtonSize(warningBlock) {
 var _default = checkButtonSize;
 exports.default = _default;
 
-},{"../../services/blocksService":13,"../enums/sizes":3,"../errors/errorsList":4,"../errors/linterError":5}],10:[function(require,module,exports){
+},{"../../services/blocksService":16,"../enums/sizes":3,"../errors/linterError":4,"../errors/warning":6}],13:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3047,7 +3148,7 @@ const checkers = {
 var _default = checkers;
 exports.default = _default;
 
-},{"./buttonPosition":8,"./buttonSize":9,"./placeholderSize":11,"./textDifference":12}],11:[function(require,module,exports){
+},{"./buttonPosition":11,"./buttonSize":12,"./placeholderSize":14,"./textDifference":15}],14:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3057,7 +3158,7 @@ exports.default = void 0;
 
 var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
-var _errorsList = require("../errors/errorsList");
+var _warning = _interopRequireDefault(require("../errors/warning"));
 
 var _blocksService = require("../../services/blocksService");
 
@@ -3080,7 +3181,7 @@ function checkPlaceholderSize(warningBlock) {
   const isSizeValid = _sizes.placeholderSizes.includes(placeholderSize);
 
   if (!isSizeValid) {
-    const error = new _linterError.default(_errorsList.warning.placeholderSize, placeholder.location);
+    const error = new _linterError.default(_warning.default.placeholderSize, placeholder.location);
     return error;
   }
 
@@ -3090,7 +3191,7 @@ function checkPlaceholderSize(warningBlock) {
 var _default = checkPlaceholderSize;
 exports.default = _default;
 
-},{"../../services/blocksService":13,"../enums/sizes":3,"../errors/errorsList":4,"../errors/linterError":5}],12:[function(require,module,exports){
+},{"../../services/blocksService":16,"../enums/sizes":3,"../errors/linterError":4,"../errors/warning":6}],15:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3100,7 +3201,7 @@ exports.default = void 0;
 
 var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
-var _errorsList = require("../errors/errorsList");
+var _warning = _interopRequireDefault(require("../errors/warning"));
 
 var _blocksService = require("../../services/blocksService");
 
@@ -3122,7 +3223,7 @@ function checkTextDifference(warningBlock) {
   const isSizesEqual = textSizes.every(size => size === textSizes[0]);
 
   if (!isSizesEqual) {
-    const error = new _linterError.default(_errorsList.warning.textSize, warningBlock.location);
+    const error = new _linterError.default(_warning.default.textSize, warningBlock.location);
     return error;
   }
 
@@ -3132,7 +3233,7 @@ function checkTextDifference(warningBlock) {
 var _default = checkTextDifference;
 exports.default = _default;
 
-},{"../../services/blocksService":13,"../errors/errorsList":4,"../errors/linterError":5}],13:[function(require,module,exports){
+},{"../../services/blocksService":16,"../errors/linterError":4,"../errors/warning":6}],16:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3149,11 +3250,22 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function convertTreeToList(root) {
   let stack = [],
       array = [];
-  stack.push(root);
+  const rootIsArray = Array.isArray(root);
+
+  if (rootIsArray) {
+    stack.push(...root);
+  } else {
+    stack.push(root);
+  }
 
   while (stack.length !== 0) {
     let node = stack.pop();
-    array.push(node);
+
+    if (rootIsArray) {
+      array.unshift(node);
+    } else {
+      array.push(node);
+    }
 
     if (!node.content) {
       continue;
@@ -3180,9 +3292,14 @@ function isBlock(node) {
 }
 
 function getChildrenOf(node) {
+  if (node.type === 'Array') {
+    return node.children;
+  }
+
   const contentProperty = node.children.find(child => {
     return child.key.value === 'content';
   });
+  console.log('contentProperty', contentProperty);
 
   if (!contentProperty) {
     return [];
@@ -3194,15 +3311,22 @@ function getChildrenOf(node) {
 function convertAstTreeToList(root) {
   let stack = [],
       array = [];
-  stack.push(root);
+  const rootIsArray = root.type === 'Array';
+
+  if (rootIsArray) {
+    stack.push(...root.children);
+  } else {
+    stack.push(root);
+  }
 
   while (stack.length !== 0) {
     let node = stack.pop();
-    array.push(node); // if (isBlock(node)) {
-    //   array.push(node);
-    // } else {
-    //   console.log('not a block', node)
-    // }
+
+    if (rootIsArray) {
+      array.unshift(node);
+    } else {
+      array.push(node);
+    }
 
     const nodeChildren = getChildrenOf(node);
 
@@ -3269,6 +3393,7 @@ function getBlocks(jsonString) {
   }
 
   const blocksList = convertTreeToList(json);
+  console.log('blocksList', blocksList);
   const ast = (0, _jsonToAst.default)(jsonString);
   const astBlocksList = convertAstTreeToList(ast);
   const blocksWithLocation = getBlocksWithLocation(blocksList, astBlocksList);

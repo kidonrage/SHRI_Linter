@@ -2,11 +2,22 @@ import parse from 'json-to-ast';
 
 export function convertTreeToList(root) {
   let stack = [], array = [];
-  stack.push(root);
+
+  const rootIsArray = Array.isArray(root)
+  if (rootIsArray) {
+    stack.push(...root);
+  } else {
+    stack.push(root);
+  }
 
   while(stack.length !== 0) {
       let node = stack.pop();
-      array.push(node);
+
+      if (rootIsArray) {
+        array.unshift(node);
+      } else {
+        array.push(node);
+      }
 
       if(!node.content) {
           continue;
@@ -33,9 +44,15 @@ function isBlock(node) {
 }
 
 function getChildrenOf(node) {
+  if (node.type === 'Array') {
+    return node.children;
+  }
+
   const contentProperty = node.children.find((child) => {
     return child.key.value === 'content'
   })
+
+  console.log('contentProperty', contentProperty)
 
   if (!contentProperty) {
     return []
@@ -46,19 +63,24 @@ function getChildrenOf(node) {
 
 function convertAstTreeToList(root) {
   let stack = [], array = [];
-  stack.push(root);
+
+  const rootIsArray = root.type === 'Array'
+  if (rootIsArray) {
+    stack.push(...root.children);
+  } else {
+    stack.push(root);
+  }
+  
 
   while(stack.length !== 0) {
       let node = stack.pop();
 
-      array.push(node);
-
-      // if (isBlock(node)) {
-      //   array.push(node);
-      // } else {
-      //   console.log('not a block', node)
-      // }
-
+      if (rootIsArray) {
+        array.unshift(node);
+      } else {
+        array.push(node);
+      }
+      
       const nodeChildren = getChildrenOf(node);
 
       if (nodeChildren.length === 0) {
@@ -123,6 +145,7 @@ export function getBlocks(jsonString) {
   }
   
   const blocksList = convertTreeToList(json);
+  console.log('blocksList', blocksList);
 
   const ast = parse(jsonString);
   const astBlocksList = convertAstTreeToList(ast);
