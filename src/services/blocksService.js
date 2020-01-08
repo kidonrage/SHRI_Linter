@@ -110,6 +110,10 @@ function getBlocksWithLocation(blocks, astBlocks) {
 }
 
 export function getBlocks(jsonString) {
+  if (jsonString.length === 0) {
+    return [];  
+  }
+
   const json = JSON.parse(jsonString);
   const blocksList = convertTreeToList(json);
 

@@ -2772,7 +2772,6 @@ function lint(jsonString) {
   const linter = new _linter.default(linterConfig);
   const blocks = (0, _blocksService.getBlocks)(jsonString);
   const errors = linter.lint(blocks);
-  console.log(errors);
   return errors;
 }
 
@@ -2950,18 +2949,18 @@ var _jsonToAst = _interopRequireDefault(require("json-to-ast"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function convertTreeToList(root) {
-  var stack = [],
+  let stack = [],
       array = [];
   stack.push(root);
 
   while (stack.length !== 0) {
-    var node = stack.pop();
+    let node = stack.pop();
     array.push(node);
 
     if (!node.content) {
       continue;
     } else {
-      for (var i = node.content.length - 1; i >= 0; i--) {
+      for (let i = node.content.length - 1; i >= 0; i--) {
         stack.push(node.content[i]);
       }
     }
@@ -2995,12 +2994,12 @@ function getChildrenOf(node) {
 }
 
 function convertAstTreeToList(root) {
-  var stack = [],
+  let stack = [],
       array = [];
   stack.push(root);
 
   while (stack.length !== 0) {
-    var node = stack.pop();
+    let node = stack.pop();
     array.push(node); // if (isBlock(node)) {
     //   array.push(node);
     // } else {
@@ -3012,7 +3011,7 @@ function convertAstTreeToList(root) {
     if (nodeChildren.length === 0) {
       continue;
     } else {
-      for (var i = nodeChildren.length - 1; i >= 0; i--) {
+      for (let i = nodeChildren.length - 1; i >= 0; i--) {
         stack.push(nodeChildren[i]);
       }
     }
@@ -3058,6 +3057,10 @@ function getBlocksWithLocation(blocks, astBlocks) {
 }
 
 function getBlocks(jsonString) {
+  if (jsonString.length === 0) {
+    return [];
+  }
+
   const json = JSON.parse(jsonString);
   const blocksList = convertTreeToList(json);
   const ast = (0, _jsonToAst.default)(jsonString);

@@ -13,7 +13,5 @@ export default function lint(jsonString) {
 
   const errors = linter.lint(blocks);
 
-  console.log(errors);
-
   return errors;
 }
