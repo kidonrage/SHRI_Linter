@@ -2752,6 +2752,7 @@ return parse$1;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],2:[function(require,module,exports){
+(function (global){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2775,6 +2776,9 @@ function lint(jsonString) {
   return errors;
 }
 
+global.lint = lint;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./linter":3,"./services/blocksService":8}],3:[function(require,module,exports){
 "use strict";
 

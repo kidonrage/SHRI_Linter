@@ -15,3 +15,5 @@ export default function lint(jsonString) {
 
   return errors;
 }
+
+global.lint = lint;
