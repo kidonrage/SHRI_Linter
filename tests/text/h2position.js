@@ -33,6 +33,19 @@ const testInputs = [
       ]
     }`,
     expectedErrors: 0
+  },
+  {
+    json: `[
+      {
+          "block": "text",
+          "mods": { "type": "h2" }
+      },
+      {
+          "block": "text",
+          "mods": { "type": "h1" }
+      }
+    ]`,
+    expectedErrors: 1
   }
 ]
 

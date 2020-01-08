@@ -34,14 +34,18 @@ const testInputs = [
     json: `[
       {
           "block": "text",
-          "mods": { "type": "h1", "lol": "lol" }
+          "mods": { "type": "h1" }
+      },
+      {
+          "block": "text",
+          "mods": { "type": "h1" }
       },
       {
           "block": "text",
           "mods": { "type": "h1" }
       }
     ]`,
-    expectedErrors: 1
+    expectedErrors: 2
   },
 ]
 
