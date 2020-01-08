@@ -2777,7 +2777,7 @@ function lint(jsonString) {
 global.lint = lint;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./linter":7,"./services/blocksService":16}],3:[function(require,module,exports){
+},{"./linter":7,"./services/blocksService":18}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2958,9 +2958,11 @@ class Linter {
 
   text(blocks) {
     const {
-      h1Severalty
+      h1Severalty,
+      h2Position,
+      h3Position
     } = _text.default;
-    const errors = [...h1Severalty(blocks)];
+    const errors = [...h1Severalty(blocks), ...h2Position(blocks), ...h3Position(blocks)];
     const flatErrors = [].concat(...errors).filter(error => error != null);
     return flatErrors;
   }
@@ -2969,7 +2971,7 @@ class Linter {
 
 exports.default = Linter;
 
-},{"../services/blocksService":16,"./text":10,"./warning":13}],9:[function(require,module,exports){
+},{"../services/blocksService":18,"./text":12,"./warning":15}],9:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3018,17 +3020,117 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+var _linterError = _interopRequireDefault(require("../errors/linterError"));
+
+var _text = _interopRequireDefault(require("../errors/text"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function checkH2Position(blocks) {
+  const h2Headers = blocks.filter(block => {
+    return block.block === 'text' && block.mods.type === 'h2';
+  });
+  const h1Header = blocks.find(block => {
+    return block.block === 'text' && block.mods.type === 'h1';
+  });
+
+  if (h2Headers.length === 0 || !h1Header) {
+    return [];
+  }
+
+  const h1Index = blocks.indexOf(h1Header);
+  const invalidH2Headers = h2Headers.filter(h2Header => {
+    const h2Index = blocks.indexOf(h2Header);
+    return h2Index < h1Index;
+  });
+  const isPositionValid = invalidH2Headers.length === 0;
+
+  if (!isPositionValid) {
+    const errors = invalidH2Headers.map(invalidHeader => {
+      const error = new _linterError.default(_text.default.h2Position, invalidHeader.location);
+      return error;
+    });
+    return errors;
+  }
+
+  return [];
+}
+
+var _default = checkH2Position;
+exports.default = _default;
+
+},{"../errors/linterError":4,"../errors/text":5}],11:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _linterError = _interopRequireDefault(require("../errors/linterError"));
+
+var _text = _interopRequireDefault(require("../errors/text"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function checkH3Position(blocks) {
+  const h3Headers = blocks.filter(block => {
+    return block.block === 'text' && block.mods.type === 'h3';
+  });
+  const h2Header = blocks.find(block => {
+    return block.block === 'text' && block.mods.type === 'h2';
+  });
+
+  if (h3Headers.length === 0 || !h2Header) {
+    return [];
+  }
+
+  const h2Index = blocks.indexOf(h2Header);
+  const invalidh3Headers = h3Headers.filter(h3Header => {
+    const h3Index = blocks.indexOf(h3Header);
+    return h3Index < h2Index;
+  });
+  const isPositionValid = invalidh3Headers.length === 0;
+
+  if (!isPositionValid) {
+    const errors = invalidh3Headers.map(invalidHeader => {
+      const error = new _linterError.default(_text.default.h3Position, invalidHeader.location);
+      return error;
+    });
+    return errors;
+  }
+
+  return [];
+}
+
+var _default = checkH3Position;
+exports.default = _default;
+
+},{"../errors/linterError":4,"../errors/text":5}],12:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
 var _h1several = _interopRequireDefault(require("./h1several"));
+
+var _h2position = _interopRequireDefault(require("./h2position"));
+
+var _h3position = _interopRequireDefault(require("./h3position"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const checkers = {
-  h1Severalty: _h1several.default
+  h1Severalty: _h1several.default,
+  h2Position: _h2position.default,
+  h3Position: _h3position.default
 };
 var _default = checkers;
 exports.default = _default;
 
-},{"./h1several":9}],11:[function(require,module,exports){
+},{"./h1several":9,"./h2position":10,"./h3position":11}],13:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3072,7 +3174,7 @@ function checkButtonPosition(warningBlock) {
 var _default = checkButtonPosition;
 exports.default = _default;
 
-},{"../../services/blocksService":16,"../errors/linterError":4,"../errors/warning":6}],12:[function(require,module,exports){
+},{"../../services/blocksService":18,"../errors/linterError":4,"../errors/warning":6}],14:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3121,7 +3223,7 @@ function checkButtonSize(warningBlock) {
 var _default = checkButtonSize;
 exports.default = _default;
 
-},{"../../services/blocksService":16,"../enums/sizes":3,"../errors/linterError":4,"../errors/warning":6}],13:[function(require,module,exports){
+},{"../../services/blocksService":18,"../enums/sizes":3,"../errors/linterError":4,"../errors/warning":6}],15:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3148,7 +3250,7 @@ const checkers = {
 var _default = checkers;
 exports.default = _default;
 
-},{"./buttonPosition":11,"./buttonSize":12,"./placeholderSize":14,"./textDifference":15}],14:[function(require,module,exports){
+},{"./buttonPosition":13,"./buttonSize":14,"./placeholderSize":16,"./textDifference":17}],16:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3191,7 +3293,7 @@ function checkPlaceholderSize(warningBlock) {
 var _default = checkPlaceholderSize;
 exports.default = _default;
 
-},{"../../services/blocksService":16,"../enums/sizes":3,"../errors/linterError":4,"../errors/warning":6}],15:[function(require,module,exports){
+},{"../../services/blocksService":18,"../enums/sizes":3,"../errors/linterError":4,"../errors/warning":6}],17:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3233,7 +3335,7 @@ function checkTextDifference(warningBlock) {
 var _default = checkTextDifference;
 exports.default = _default;
 
-},{"../../services/blocksService":16,"../errors/linterError":4,"../errors/warning":6}],16:[function(require,module,exports){
+},{"../../services/blocksService":18,"../errors/linterError":4,"../errors/warning":6}],18:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
