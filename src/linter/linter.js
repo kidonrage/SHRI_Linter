@@ -1,5 +1,5 @@
 import {findBlocksIn} from '../services/blocksService';
-import checkTextDifference from './warning/textDifference';
+import warningCheckers from './warning/';
 
 export default class Linter {
 
@@ -13,17 +13,26 @@ export default class Linter {
       return this[blockName](blocksToCheck)
     })
 
-    const filteredErrors = [].concat(...errors).filter((error) => error != null)
+    // 2d blocks errors array to 1d
+    const flatErrors = [].concat(...errors);
 
     return filteredErrors;
   }
 
   warning(blocks) {
+    const {checkTextDifference, checkButtonSize} = warningCheckers;
+
     const errors = blocks.map((block) => {
-      return checkTextDifference(block);
+      return [
+        checkTextDifference(block),
+        checkButtonSize(block)
+      ]
     });
 
-    return errors;
+    // 2d warning errors array to 1d
+    const flatErrors = [].concat(...errors).filter((error) => error != null)
+
+    return flatErrors;
   }
 
 }

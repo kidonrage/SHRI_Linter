@@ -2773,69 +2773,52 @@ function lint(jsonString) {
   const linter = new _linter.default(linterConfig);
   const blocks = (0, _blocksService.getBlocks)(jsonString);
   const errors = linter.lint(blocks);
+  console.log(errors);
   return errors;
 }
 
 global.lint = lint;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./linter":3,"./services/blocksService":8}],3:[function(require,module,exports){
+},{"./linter":6,"./services/blocksService":11}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-
-var _linter = _interopRequireDefault(require("./linter"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var _default = _linter.default;
+const sizes = ['xxxs', 'xxs', 'xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl', 'xxxxxl'];
+var _default = sizes;
 exports.default = _default;
 
-},{"./linter":4}],4:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
-
-var _linterError = _interopRequireDefault(require("./linterError"));
-
-var _blocksService = require("../services/blocksService");
-
-var _textDifference = _interopRequireDefault(require("./warning/textDifference"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-class Linter {
-  constructor(configuration) {
-    this.blocksToCheck = configuration.blocks;
+exports.warning = void 0;
+const warning = {
+  textSize: {
+    code: 'WARNING.TEXT_SIZES_SHOULD_BE_EQUAL',
+    desc: 'Тексты в блоке warning должны быть одного размера.'
+  },
+  buttonSize: {
+    code: 'WARNING.INVALID_BUTTON_SIZE',
+    desc: 'Размер кнопки блока warning должен быть на 1 шаг больше эталонного.'
+  },
+  buttonPosition: {
+    code: 'INVALID_BUTTON_POSITION',
+    desc: 'Блок button в блоке warning не может находиться перед блоком placeholder на том же или более глубоком уровне вложенности.'
+  },
+  placeholderSize: {
+    code: 'WARNING.INVALID_PLACEHOLDER_SIZE',
+    desc: 'Допустимые размеры для блока placeholder в блоке warning: s, m, l.'
   }
+};
+exports.warning = warning;
 
-  lint(blocks) {
-    const errors = this.blocksToCheck.map(blockName => {
-      const blocksToCheck = (0, _blocksService.findBlocksIn)(blocks, blockName);
-      return this[blockName](blocksToCheck);
-    });
-    const filteredErrors = [].concat(...errors).filter(error => error != null);
-    return filteredErrors;
-  }
-
-  warning(blocks) {
-    const errors = blocks.map(block => {
-      return (0, _textDifference.default)(block);
-    });
-    return errors;
-  }
-
-}
-
-exports.default = Linter;
-
-},{"../services/blocksService":8,"./linterError":5,"./warning/textDifference":7}],5:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2877,29 +2860,16 @@ exports.default = LinterError;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getContentOf = getContentOf;
-exports.getModValuesOf = getModValuesOf;
+exports.default = void 0;
 
-function getContentOf(block) {
-  const contentValue = getChildValue(block, 'content');
-  return contentValue.children;
-}
+var _linter = _interopRequireDefault(require("./linter"));
 
-function getModValuesOf(blocks, modName) {
-  const values = blocks.map(block => {
-    const mods = getChildValue(block, 'mods');
-    const resultMod = mods.children.find(mod => mod.key.value === modName);
-    return resultMod.value.value;
-  });
-  return values;
-}
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function getChildValue(block, childKey) {
-  const childIndex = block.children.map(child => child.key.value).indexOf(childKey);
-  return block.children[childIndex].value;
-}
+var _default = _linter.default;
+exports.default = _default;
 
-},{}],7:[function(require,module,exports){
+},{"./linter":7}],7:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2907,18 +2877,133 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-var _linterError = _interopRequireDefault(require("../linterError"));
+var _blocksService = require("../services/blocksService");
+
+var _warning = _interopRequireDefault(require("./warning/"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+class Linter {
+  constructor(configuration) {
+    this.blocksToCheck = configuration.blocks;
+  }
+
+  lint(blocks) {
+    const errors = this.blocksToCheck.map(blockName => {
+      const blocksToCheck = (0, _blocksService.findBlocksIn)(blocks, blockName);
+      return this[blockName](blocksToCheck);
+    }); // 2d blocks errors array to 1d
+
+    const flatErrors = [].concat(...errors);
+    return filteredErrors;
+  }
+
+  warning(blocks) {
+    const {
+      checkTextDifference,
+      checkButtonSize
+    } = _warning.default;
+    const errors = blocks.map(block => {
+      return [checkTextDifference(block), checkButtonSize(block)];
+    }); // 2d warning errors array to 1d
+
+    const flatErrors = [].concat(...errors).filter(error => error != null);
+    return flatErrors;
+  }
+
+}
+
+exports.default = Linter;
+
+},{"../services/blocksService":11,"./warning/":9}],8:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _linterError = _interopRequireDefault(require("../errors/linterError"));
+
+var _errorsList = require("../errors/errorsList");
 
 var _blocksService = require("../../services/blocksService");
 
-var _linterService = require("../linterService");
+var _sizes = _interopRequireDefault(require("../enums/sizes"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function checkButtonSize(warningBlock) {
+  const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
+  const buttons = nodes.filter(node => {
+    return node.block === 'button';
+  });
+  const firstTextBlock = nodes.find(node => {
+    return node.block === 'text';
+  });
+  const standardSize = firstTextBlock.mods.size;
+
+  const standardSizeIdx = _sizes.default.indexOf(standardSize);
+
+  const buttonSizes = buttons.map(button => {
+    return button.mods.size;
+  });
+  const isSizesValid = buttonSizes.every(size => size === _sizes.default[standardSizeIdx + 1]);
+
+  if (!isSizesValid) {
+    const {
+      code,
+      desc
+    } = _errorsList.warning.buttonSize;
+    const error = new _linterError.default(code, desc, warningBlock.location);
+    return error;
+  }
+
+  return null;
+}
+
+var _default = checkButtonSize;
+exports.default = _default;
+
+},{"../../services/blocksService":11,"../enums/sizes":3,"../errors/errorsList":4,"../errors/linterError":5}],9:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _textDifference = _interopRequireDefault(require("./textDifference"));
+
+var _buttonSize = _interopRequireDefault(require("./buttonSize"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const checkers = {
+  checkTextDifference: _textDifference.default,
+  checkButtonSize: _buttonSize.default
+};
+var _default = checkers;
+exports.default = _default;
+
+},{"./buttonSize":8,"./textDifference":10}],10:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _linterError = _interopRequireDefault(require("../errors/linterError"));
+
+var _errorsList = require("../errors/errorsList");
+
+var _blocksService = require("../../services/blocksService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkTextDifference(warningBlock) {
-  const nodes = (0, _blocksService.convertTreeToList)(warningBlock); // const content = getContentOf(warningBlock);
-  // const textSizes = getModValuesOf(content, 'size');
-
+  const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
   const textBlocks = nodes.filter(node => {
     return node.block === 'text';
   });
@@ -2928,7 +3013,11 @@ function checkTextDifference(warningBlock) {
   const isSizesEqual = textSizes.every(size => size === textSizes[0]);
 
   if (!isSizesEqual) {
-    const error = new _linterError.default("WARNING.TEXT_SIZES_SHOULD_BE_EQUAL", "Тексты в блоке warning должны быть одного размера", warningBlock.location);
+    const {
+      code,
+      desc
+    } = _errorsList.warning.textSize;
+    const error = new _linterError.default(code, desc, warningBlock.location);
     return error;
   }
 
@@ -2938,7 +3027,7 @@ function checkTextDifference(warningBlock) {
 var _default = checkTextDifference;
 exports.default = _default;
 
-},{"../../services/blocksService":8,"../linterError":5,"../linterService":6}],8:[function(require,module,exports){
+},{"../../services/blocksService":11,"../errors/errorsList":4,"../errors/linterError":5}],11:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
