@@ -1,17 +1,17 @@
 import parse from 'json-to-ast';
 
 export function convertTreeToList(root) {
-  var stack = [], array = [];
+  let stack = [], array = [];
   stack.push(root);
 
   while(stack.length !== 0) {
-      var node = stack.pop();
+      let node = stack.pop();
       array.push(node);
 
       if(!node.content) {
           continue;
       } else {
-          for (var i = node.content.length - 1; i >= 0; i--) {
+          for (let i = node.content.length - 1; i >= 0; i--) {
               stack.push(node.content[i]);
           }
       }
@@ -45,11 +45,11 @@ function getChildrenOf(node) {
 }
 
 function convertAstTreeToList(root) {
-  var stack = [], array = [];
+  let stack = [], array = [];
   stack.push(root);
 
   while(stack.length !== 0) {
-      var node = stack.pop();
+      let node = stack.pop();
 
       array.push(node);
 
@@ -64,7 +64,7 @@ function convertAstTreeToList(root) {
       if (nodeChildren.length === 0) {
         continue;
       } else {
-        for (var i = nodeChildren.length - 1; i >= 0; i--) {
+        for (let i = nodeChildren.length - 1; i >= 0; i--) {
           stack.push(nodeChildren[i]);
         }
       }
