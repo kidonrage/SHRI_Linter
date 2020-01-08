@@ -2769,8 +2769,14 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function lint(jsonString) {
   const linter = new _linter.default();
   const blocks = (0, _blocksService.getBlocks)(jsonString);
+  blocks.forEach(block => {
+    console.log('block location', block.location);
+  });
   const errors = linter.lint(blocks);
   console.log(errors);
+  errors.forEach(error => {
+    console.log('error.location', error.location);
+  });
   return errors;
 }
 
@@ -2997,10 +3003,8 @@ function checkH1Severalty(blocks) {
   const isHeadersValid = h1Headers.length === 1;
 
   if (!isHeadersValid) {
-    console.log(h1Headers[0].location);
     const errors = h1Headers.slice(1).map(invalidHeader => {
       const error = new _linterError.default(_text.default.severalH1, invalidHeader.location);
-      console.log(invalidHeader.location);
       return error;
     });
     return errors;
@@ -3041,7 +3045,7 @@ function checkH2Position(blocks) {
   const h1Index = blocks.indexOf(h1Header);
   const invalidH2Headers = h2Headers.filter(h2Header => {
     const h2Index = blocks.indexOf(h2Header);
-    return h2Index < h1Index;
+    return h2Index < h1Index && h2Header.depth >= h1Header.depth;
   });
   const isPositionValid = invalidH2Headers.length === 0;
 
@@ -3077,18 +3081,25 @@ function checkH3Position(blocks) {
   const h3Headers = blocks.filter(block => {
     return block.block === 'text' && block.mods.type === 'h3';
   });
-  const h2Header = blocks.find(block => {
+  const h2Headers = blocks.filter(block => {
     return block.block === 'text' && block.mods.type === 'h2';
   });
 
-  if (h3Headers.length === 0 || !h2Header) {
+  if (h3Headers.length === 0 || h2Headers.length === 0) {
     return [];
   }
 
-  const h2Index = blocks.indexOf(h2Header);
   const invalidh3Headers = h3Headers.filter(h3Header => {
+    let isInvalid = false;
     const h3Index = blocks.indexOf(h3Header);
-    return h3Index < h2Index;
+    h2Headers.forEach(h2Header => {
+      const h2Index = blocks.indexOf(h2Header);
+
+      if (h3Index < h2Index && h3Header.depth >= h2Header.depth) {
+        isInvalid = true;
+      }
+    });
+    return isInvalid;
   });
   const isPositionValid = invalidh3Headers.length === 0;
 
@@ -3312,7 +3323,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function checkTextDifference(warningBlock) {
   const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
   const textBlocks = nodes.filter(node => {
-    return node.block === 'text';
+    return node.block === 'text' && !node.elem;
   }); // Если в блоке нет текста
 
   if (textBlocks.length === 0) {
@@ -3320,6 +3331,7 @@ function checkTextDifference(warningBlock) {
   }
 
   const textSizes = textBlocks.map(block => {
+    console.log('block', block);
     return block.mods.size;
   });
   const isSizesEqual = textSizes.every(size => size === textSizes[0]);
@@ -3356,24 +3368,34 @@ function convertTreeToList(root) {
 
   if (rootIsArray) {
     stack.push(...root);
+    console.log('stack', stack);
   } else {
     stack.push(root);
   }
 
-  while (stack.length !== 0) {
-    let node = stack.pop();
+  let depth = 0;
+  let isPreviousDeeper = false;
 
-    if (rootIsArray) {
-      array.unshift(node);
-    } else {
-      array.push(node);
-    }
+  while (stack.length !== 0) {
+    let node = stack.shift();
+    node.depth = depth;
+    console.log('node', node);
+    array.push(node);
 
     if (!node.content) {
+      if (isPreviousDeeper) {
+        depth--;
+        isPreviousDeeper = true;
+      }
+
       continue;
     } else {
-      for (let i = node.content.length - 1; i >= 0; i--) {
-        stack.push(node.content[i]);
+      isPreviousDeeper = false;
+      depth++;
+      console.log('node.content', node.content);
+
+      if (Array.isArray(node.content)) {
+        stack.unshift(...node.content);
       }
     }
   }
@@ -3401,7 +3423,6 @@ function getChildrenOf(node) {
   const contentProperty = node.children.find(child => {
     return child.key.value === 'content';
   });
-  console.log('contentProperty', contentProperty);
 
   if (!contentProperty) {
     return [];
@@ -3422,22 +3443,14 @@ function convertAstTreeToList(root) {
   }
 
   while (stack.length !== 0) {
-    let node = stack.pop();
-
-    if (rootIsArray) {
-      array.unshift(node);
-    } else {
-      array.push(node);
-    }
-
+    let node = stack.shift();
+    array.push(node);
     const nodeChildren = getChildrenOf(node);
 
     if (nodeChildren.length === 0) {
       continue;
     } else {
-      for (let i = nodeChildren.length - 1; i >= 0; i--) {
-        stack.push(nodeChildren[i]);
-      }
+      stack.unshift(...nodeChildren);
     }
   }
 
@@ -3495,7 +3508,7 @@ function getBlocks(jsonString) {
   }
 
   const blocksList = convertTreeToList(json);
-  console.log('blocksList', blocksList);
+  console.log('blockList', blocksList);
   const ast = (0, _jsonToAst.default)(jsonString);
   const astBlocksList = convertAstTreeToList(ast);
   const blocksWithLocation = getBlocksWithLocation(blocksList, astBlocksList);

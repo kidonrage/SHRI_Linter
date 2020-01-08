@@ -16,7 +16,7 @@ function checkH2Position(blocks) {
   const h1Index = blocks.indexOf(h1Header);
   const invalidH2Headers = h2Headers.filter((h2Header) => {
     const h2Index = blocks.indexOf(h2Header);
-    return h2Index < h1Index;
+    return h2Index < h1Index && h2Header.depth >= h1Header.depth;
   })
 
   const isPositionValid = invalidH2Headers.length === 0;

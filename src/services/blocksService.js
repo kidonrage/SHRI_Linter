@@ -11,16 +11,27 @@ export function convertTreeToList(root) {
     stack.push(root);
   }
 
+  let depth = 0;
+  let isPreviousDeeper = false
+
   while(stack.length !== 0) {
       let node = stack.shift();
+      node.depth = depth;
 
       console.log('node', node)
 
       array.push(node);
 
       if(!node.content) {
+        if (isPreviousDeeper) {
+          depth--;
+          isPreviousDeeper = true
+        }
+        
         continue;
       } else {
+        isPreviousDeeper = false;
+        depth++;
         console.log('node.content', node.content)
         if (Array.isArray(node.content)) {
           stack.unshift(...node.content)

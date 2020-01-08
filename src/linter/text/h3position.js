@@ -5,18 +5,27 @@ function checkH3Position(blocks) {
   const h3Headers = blocks.filter((block) => {
     return block.block === 'text' && block.mods.type === 'h3';
   });
-  const h2Header = blocks.find((block) => {
+  const h2Headers = blocks.filter((block) => {
     return block.block === 'text' && block.mods.type === 'h2';
   });
 
-  if (h3Headers.length === 0 || !h2Header) {
+  if (h3Headers.length === 0 || h2Headers.length === 0) {
     return []
   }
-
-  const h2Index = blocks.indexOf(h2Header);
+  
   const invalidh3Headers = h3Headers.filter((h3Header) => {
+    let isInvalid = false;
+
     const h3Index = blocks.indexOf(h3Header);
-    return h3Index < h2Index;
+
+    h2Headers.forEach(h2Header => {
+      const h2Index = blocks.indexOf(h2Header);
+      if (h3Index < h2Index && h3Header.depth >= h2Header.depth) {
+        isInvalid = true;
+      }
+    });
+
+    return isInvalid;
   })
 
   const isPositionValid = invalidh3Headers.length === 0;
