@@ -6,7 +6,7 @@ function checkTextDifference(warningBlock) {
   const nodes = convertTreeToList(warningBlock);
 
   const textBlocks = nodes.filter((node) => {
-    return node.block === 'text';
+    return node.block === 'text' && !node.elem;
   });
   // Если в блоке нет текста
   if (textBlocks.length === 0) {
@@ -14,6 +14,7 @@ function checkTextDifference(warningBlock) {
   }
 
   const textSizes = textBlocks.map((block) => {
+    console.log('block', block)
     return block.mods.size;
   })
 

@@ -6,25 +6,25 @@ export function convertTreeToList(root) {
   const rootIsArray = Array.isArray(root)
   if (rootIsArray) {
     stack.push(...root);
+    console.log('stack', stack)
   } else {
     stack.push(root);
   }
 
   while(stack.length !== 0) {
-      let node = stack.pop();
+      let node = stack.shift();
 
-      if (rootIsArray) {
-        array.unshift(node);
-      } else {
-        array.push(node);
-      }
+      console.log('node', node)
+
+      array.push(node);
 
       if(!node.content) {
-          continue;
+        continue;
       } else {
-          for (let i = node.content.length - 1; i >= 0; i--) {
-              stack.push(node.content[i]);
-          }
+        console.log('node.content', node.content)
+        if (Array.isArray(node.content)) {
+          stack.unshift(...node.content)
+        }
       }
   }
 
@@ -52,8 +52,6 @@ function getChildrenOf(node) {
     return child.key.value === 'content'
   })
 
-  console.log('contentProperty', contentProperty)
-
   if (!contentProperty) {
     return []
   }
@@ -70,25 +68,18 @@ function convertAstTreeToList(root) {
   } else {
     stack.push(root);
   }
-  
 
   while(stack.length !== 0) {
-      let node = stack.pop();
+      let node = stack.shift();
 
-      if (rootIsArray) {
-        array.unshift(node);
-      } else {
-        array.push(node);
-      }
+      array.push(node);
       
       const nodeChildren = getChildrenOf(node);
 
       if (nodeChildren.length === 0) {
         continue;
       } else {
-        for (let i = nodeChildren.length - 1; i >= 0; i--) {
-          stack.push(nodeChildren[i]);
-        }
+        stack.unshift(...nodeChildren)
       }
   }
 
@@ -145,7 +136,7 @@ export function getBlocks(jsonString) {
   }
   
   const blocksList = convertTreeToList(json);
-  console.log('blocksList', blocksList);
+  console.log('blockList', blocksList);
 
   const ast = parse(jsonString);
   const astBlocksList = convertAstTreeToList(ast);

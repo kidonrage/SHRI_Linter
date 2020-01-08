@@ -13,15 +13,11 @@ function checkH1Severalty(blocks) {
   const isHeadersValid = h1Headers.length === 1;
 
   if (!isHeadersValid) {
-    console.log(h1Headers[0].location);
-
     const errors = h1Headers.slice(1).map((invalidHeader) => {
       const error = new LinterError(
         textErrors.severalH1,
         invalidHeader.location
       );
-
-      console.log(invalidHeader.location)
     
       return error;
     })
