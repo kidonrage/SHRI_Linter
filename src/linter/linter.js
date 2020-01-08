@@ -8,6 +8,10 @@ export default class Linter {
   }
 
   lint(blocks) {
+    if (blocks.length < 1) {
+      return [];
+    }
+
     const errors = this.blocksToCheck.map((blockName) => {
       const blocksToCheck = findBlocksIn(blocks, blockName);
       return this[blockName](blocksToCheck)
@@ -20,13 +24,14 @@ export default class Linter {
   }
 
   warning(blocks) {
-    const {textDifference, buttonSize, buttonPosition} = warningCheckers;
+    const {textDifference, buttonSize, buttonPosition, placeholderSize} = warningCheckers;
 
     const errors = blocks.map((block) => {
       return [
         textDifference(block),
         buttonSize(block),
-        buttonPosition(block)
+        buttonPosition(block),
+        placeholderSize(block)
       ]
     });
 

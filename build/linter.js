@@ -2780,14 +2780,16 @@ function lint(jsonString) {
 global.lint = lint;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./linter":6,"./services/blocksService":12}],3:[function(require,module,exports){
+},{"./linter":6,"./services/blocksService":13}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.default = exports.placeholderSizes = void 0;
 const sizes = ['xxxs', 'xxs', 'xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl', 'xxxxxl'];
+const placeholderSizes = ['s', 'm', 'l'];
+exports.placeholderSizes = placeholderSizes;
 var _default = sizes;
 exports.default = _default;
 
@@ -2893,6 +2895,10 @@ class Linter {
   }
 
   lint(blocks) {
+    if (blocks.length < 1) {
+      return [];
+    }
+
     const errors = this.blocksToCheck.map(blockName => {
       const blocksToCheck = (0, _blocksService.findBlocksIn)(blocks, blockName);
       return this[blockName](blocksToCheck);
@@ -2906,10 +2912,11 @@ class Linter {
     const {
       textDifference,
       buttonSize,
-      buttonPosition
+      buttonPosition,
+      placeholderSize
     } = _warning.default;
     const errors = blocks.map(block => {
-      return [textDifference(block), buttonSize(block), buttonPosition(block)];
+      return [textDifference(block), buttonSize(block), buttonPosition(block), placeholderSize(block)];
     }); // 2d warning errors array to 1d
 
     const flatErrors = [].concat(...errors).filter(error => error != null);
@@ -2920,7 +2927,7 @@ class Linter {
 
 exports.default = Linter;
 
-},{"../services/blocksService":12,"./warning/":10}],8:[function(require,module,exports){
+},{"../services/blocksService":13,"./warning/":10}],8:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2964,7 +2971,7 @@ function checkButtonPosition(warningBlock) {
 var _default = checkButtonPosition;
 exports.default = _default;
 
-},{"../../services/blocksService":12,"../errors/errorsList":4,"../errors/linterError":5}],9:[function(require,module,exports){
+},{"../../services/blocksService":13,"../errors/errorsList":4,"../errors/linterError":5}],9:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3013,7 +3020,7 @@ function checkButtonSize(warningBlock) {
 var _default = checkButtonSize;
 exports.default = _default;
 
-},{"../../services/blocksService":12,"../enums/sizes":3,"../errors/errorsList":4,"../errors/linterError":5}],10:[function(require,module,exports){
+},{"../../services/blocksService":13,"../enums/sizes":3,"../errors/errorsList":4,"../errors/linterError":5}],10:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3027,17 +3034,63 @@ var _buttonSize = _interopRequireDefault(require("./buttonSize"));
 
 var _buttonPosition = _interopRequireDefault(require("./buttonPosition"));
 
+var _placeholderSize = _interopRequireDefault(require("./placeholderSize"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const checkers = {
   textDifference: _textDifference.default,
   buttonSize: _buttonSize.default,
-  buttonPosition: _buttonPosition.default
+  buttonPosition: _buttonPosition.default,
+  placeholderSize: _placeholderSize.default
 };
 var _default = checkers;
 exports.default = _default;
 
-},{"./buttonPosition":8,"./buttonSize":9,"./textDifference":11}],11:[function(require,module,exports){
+},{"./buttonPosition":8,"./buttonSize":9,"./placeholderSize":11,"./textDifference":12}],11:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _linterError = _interopRequireDefault(require("../errors/linterError"));
+
+var _errorsList = require("../errors/errorsList");
+
+var _blocksService = require("../../services/blocksService");
+
+var _sizes = require("../enums/sizes");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function checkPlaceholderSize(warningBlock) {
+  const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
+  const placeholder = nodes.find(node => {
+    return node.block === 'placeholder';
+  });
+
+  if (!placeholder) {
+    return null;
+  }
+
+  const placeholderSize = placeholder.mods.size;
+
+  const isSizeValid = _sizes.placeholderSizes.includes(placeholderSize);
+
+  if (!isSizeValid) {
+    const error = new _linterError.default(_errorsList.warning.placeholderSize, placeholder.location);
+    return error;
+  }
+
+  return null;
+}
+
+var _default = checkPlaceholderSize;
+exports.default = _default;
+
+},{"../../services/blocksService":13,"../enums/sizes":3,"../errors/errorsList":4,"../errors/linterError":5}],12:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3057,7 +3110,12 @@ function checkTextDifference(warningBlock) {
   const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
   const textBlocks = nodes.filter(node => {
     return node.block === 'text';
-  });
+  }); // Если в блоке нет текста
+
+  if (textBlocks.length === 0) {
+    return null;
+  }
+
   const textSizes = textBlocks.map(block => {
     return block.mods.size;
   });
@@ -3074,7 +3132,7 @@ function checkTextDifference(warningBlock) {
 var _default = checkTextDifference;
 exports.default = _default;
 
-},{"../../services/blocksService":12,"../errors/errorsList":4,"../errors/linterError":5}],12:[function(require,module,exports){
+},{"../../services/blocksService":13,"../errors/errorsList":4,"../errors/linterError":5}],13:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3201,7 +3259,15 @@ function getBlocks(jsonString) {
     return [];
   }
 
-  const json = JSON.parse(jsonString);
+  let json = {};
+
+  try {
+    json = JSON.parse(jsonString);
+  } catch (e) {
+    console.log('Invalid JSON');
+    return [];
+  }
+
   const blocksList = convertTreeToList(json);
   const ast = (0, _jsonToAst.default)(jsonString);
   const astBlocksList = convertAstTreeToList(ast);
