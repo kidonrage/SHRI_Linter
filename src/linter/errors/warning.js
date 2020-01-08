@@ -1,4 +1,4 @@
-export const warning = {
+const warning = {
   textSize: {
     code: 'WARNING.TEXT_SIZES_SHOULD_BE_EQUAL',
     desc: 'Тексты в блоке warning должны быть одного размера.'
@@ -16,3 +16,5 @@ export const warning = {
     desc: 'Допустимые размеры для блока placeholder в блоке warning: s, m, l.'
   }
 }
+
+export default warning;

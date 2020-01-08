@@ -1,5 +1,5 @@
 import LinterError from '../errors/linterError';
-import {warning as warningErrors} from '../errors/errorsList';
+import warningErrors from '../errors/warning';
 import {convertTreeToList} from '../../services/blocksService';
 
 function checkButtonPosition(warningBlock) {
