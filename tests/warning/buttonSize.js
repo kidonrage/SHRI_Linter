@@ -13,14 +13,8 @@ const testInputs = [
         {
           "elem": "content",
           "content": [
-            {
-                "block": "text",
-                "mods": { "size": "m" }
-            },
-            {
-                "block": "text",
-                "mods": { "size": "l" }
-            }
+            { "block": "text", "mods": { "size": "l" } },
+            { "block": "button", "mods": { "size": "s" } }
           ]
         }
       ]
@@ -32,7 +26,7 @@ const testInputs = [
       "block": "warning",
       "content": [
           { "block": "text", "mods": { "size": "l" } },
-          { "block": "text", "mods": { "size": "m" } }
+          { "block": "button", "mods": { "size": "s" } }
       ]
     }`,
     expectedErrors: 1
@@ -42,14 +36,14 @@ const testInputs = [
       "block": "warning",
       "content": [
           { "block": "text", "mods": { "size": "l" } },
-          { "block": "text", "mods": { "size": "l" } }
+          { "block": "button", "mods": { "size": "xl" } }
       ]
     }`,
     expectedErrors: 0
   }
 ]
 
-export default function textSize() {
+export default function buttonSize() {
   testInputs.forEach((input) => {
     const result = lint(input.json);
     chai.assert.equal(result.length, input.expectedErrors);
