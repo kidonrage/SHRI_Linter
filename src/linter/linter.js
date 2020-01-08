@@ -16,7 +16,7 @@ export default class Linter {
     // 2d blocks errors array to 1d
     const flatErrors = [].concat(...errors);
 
-    return filteredErrors;
+    return flatErrors;
   }
 
   warning(blocks) {
