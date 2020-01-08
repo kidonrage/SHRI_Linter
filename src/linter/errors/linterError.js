@@ -1,8 +1,10 @@
 export default class LinterError {
 
-  constructor(code = '', error = '', astLocation) {
-    this.error = error;
+  constructor(errorInfo, astLocation) {
+    const {desc, code} = errorInfo;
+
     this.code = code;
+    this.error = desc;
 
     const {line: startLine, column: startColumn} = astLocation.start;
     const {line: endLine, column: endColumn} = astLocation.end;

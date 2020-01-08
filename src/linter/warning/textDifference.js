@@ -14,13 +14,10 @@ function checkTextDifference(warningBlock) {
   const isSizesEqual = textSizes.every( size => size === textSizes[0] )
 
   if (!isSizesEqual) {
-    const {code, desc} = warningErrors.textSize;
-    
     const error = new LinterError(
-      code,
-      desc,
+      warningErrors.textSize,
       warningBlock.location
-    )
+    );
   
     return error;
   }

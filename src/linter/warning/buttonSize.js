@@ -24,11 +24,8 @@ function checkButtonSize(warningBlock) {
   const isSizesValid = buttonSizes.every( size => size === sizes[standardSizeIdx + 1] )
 
   if (!isSizesValid) {
-    const {code, desc} = warningErrors.buttonSize;
-
     const error = new LinterError(
-      code,
-      desc,
+      warningErrors.buttonSize,
       warningBlock.location
     )
   
