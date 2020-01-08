@@ -19,7 +19,7 @@ function checkTextDifference(warningBlock) {
     const error = new LinterError(
       "WARNING.TEXT_SIZES_SHOULD_BE_EQUAL",
       "Тексты в блоке warning должны быть одного размера",
-      warningBlock.loc
+      warningBlock.location
     )
   
     return error;

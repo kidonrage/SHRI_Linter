@@ -83,15 +83,27 @@ function getBlocksWithLocation(blocks, astBlocks) {
       const astChildren = getChildrenOf(astBlock);
 
       const contentWithLoc = result.content.map((contentBlock, index) => {
-        const {loc} = astChildren[index];
-        return {...contentBlock, loc}
+        const {start, end} = astChildren[index].loc;
+        return {
+          ...contentBlock, 
+          location: {
+            start,
+            end
+          }
+        }
       })
 
       result.content = contentWithLoc;
     }
 
-    const {loc} = astBlock;
-    return {...result, loc}
+    const {start, end} = astBlock.loc;
+    return {
+      ...result, 
+      location: {
+        start,
+        end
+      }
+    }
   });
 
   return blockWithLocation;

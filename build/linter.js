@@ -2925,7 +2925,7 @@ function checkTextDifference(warningBlock) {
   const isSizesEqual = textSizes.every(size => size === textSizes[0]);
 
   if (!isSizesEqual) {
-    const error = new _linterError.default("WARNING.TEXT_SIZES_SHOULD_BE_EQUAL", "Тексты в блоке warning должны быть одного размера", warningBlock.loc);
+    const error = new _linterError.default("WARNING.TEXT_SIZES_SHOULD_BE_EQUAL", "Тексты в блоке warning должны быть одного размера", warningBlock.location);
     return error;
   }
 
@@ -3030,20 +3030,28 @@ function getBlocksWithLocation(blocks, astBlocks) {
       const astChildren = getChildrenOf(astBlock);
       const contentWithLoc = result.content.map((contentBlock, index) => {
         const {
-          loc
-        } = astChildren[index];
+          start,
+          end
+        } = astChildren[index].loc;
         return { ...contentBlock,
-          loc
+          location: {
+            start,
+            end
+          }
         };
       });
       result.content = contentWithLoc;
     }
 
     const {
-      loc
-    } = astBlock;
+      start,
+      end
+    } = astBlock.loc;
     return { ...result,
-      loc
+      location: {
+        start,
+        end
+      }
     };
   });
   return blockWithLocation;
