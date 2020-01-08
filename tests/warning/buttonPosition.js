@@ -6,8 +6,8 @@ const testInputs = [
     json: `{
       "block": "warning",
       "content": [
-          { "block": "text", "mods": { "size": "l" } },
-          { "block": "button", "mods": { "size": "s" } }
+          { "block": "button", "mods": { "size": "m" } },
+          { "block": "placeholder", "mods": { "size": "m" } }
       ]
     }`,
     expectedErrors: 1
@@ -16,15 +16,15 @@ const testInputs = [
     json: `{
       "block": "warning",
       "content": [
-          { "block": "text", "mods": { "size": "l" } },
-          { "block": "button", "mods": { "size": "xl" } }
+          { "block": "placeholder", "mods": { "size": "m" } },
+          { "block": "button", "mods": { "size": "m" } }
       ]
     }`,
     expectedErrors: 0
   }
 ]
 
-export default function buttonSize() {
+export default function buttonPosition() {
   testInputs.forEach((input) => {
     const result = lint(input.json);
     chai.assert.equal(result.length, input.expectedErrors);
