@@ -16,8 +16,39 @@ const testInputs = [
     json: `{
       "block": "warning",
       "content": [
+        {
+          "block": "something",
+          "content": [
+              { "block": "button", "mods": { "size": "m" } }
+          ]
+        },
+        { "block": "button", "mods": { "size": "m" } },
+        { "block": "placeholder", "mods": { "size": "m" } }
+      ]
+    }`,
+    expectedErrors: 1
+  },
+  {
+    json: `{
+      "block": "warning",
+      "content": [
           { "block": "placeholder", "mods": { "size": "m" } },
           { "block": "button", "mods": { "size": "m" } }
+      ]
+    }`,
+    expectedErrors: 0
+  },
+  {
+    json: `{
+      "block": "warning",
+      "content": [
+        { "block": "button", "mods": { "size": "m" } },
+        {
+          "block": "something",
+          "content": [
+            { "block": "placeholder", "mods": { "size": "m" } }
+          ]
+        }
       ]
     }`,
     expectedErrors: 0

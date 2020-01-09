@@ -70,7 +70,7 @@ const testInputs = [
       }
     ]`,
     expectedErrors: 6
-  },
+  }
 ]
 
 export default function textSize() {
