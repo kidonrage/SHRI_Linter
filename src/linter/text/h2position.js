@@ -3,10 +3,10 @@ import textErrors from '../errors/text';
 
 function checkH2Position(blocks) {
   const h2Headers = blocks.filter((block) => {
-    return block.block === 'text' && block.mods.type === 'h2';
+    return block.block === 'text' && !block.elem && block.mods.type === 'h2';
   });
   const h1Header = blocks.find((block) => {
-    return block.block === 'text' && block.mods.type === 'h1';
+    return block.block === 'text' && !block.elem && block.mods.type === 'h1';
   });
 
   if (h2Headers.length === 0 || !h1Header) {

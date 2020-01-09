@@ -76,50 +76,78 @@ function isBlock(node) {
   return false;
 }
 
+function applyLocationsToBlock(block, astBlockRepresentation) {
+  const {start, end} = astBlockRepresentation.loc;
+  const result = {
+    ...block,
+    location: {
+      start,
+      end
+    }
+  }
+
+  const blockChildren = getChildrenOf(block);
+  const astChildren = getASTChildrenOf(astBlockRepresentation);
+
+  const childrenWithLocation = blockChildren.map((child, index) => {
+    const astChild = astChildren[index];
+    return applyLocationsToBlock(child, astChild);
+  });
+
+  if (blockChildren.length > 0) {
+    if (Array.isArray(result.content)) {
+      // Контент - массив
+      result.content = childrenWithLocation;
+    } else {
+      // Контент - объект
+      result.content = childrenWithLocation[0];
+    }
+  }
+
+  return result;
+}
+
 function getBlocksWithLocation(blocks, astBlocks) {
   const blockWithLocation = blocks.map((block, index) => {
     let result = block;
 
-    const astBlock = astBlocks[index];
+    const astBlock = astBlocks[index];  
 
-    console.log('result', result);
-    console.log('astBlock', astBlock);
+    // console.log('result', result);
+    // console.log('astBlock', astBlock);
 
-    if (result.content) {
-      let content = [].concat(result.content);
-       
-      let astChildren = getASTChildrenOf(astBlock);
-      console.log('content', content);
-      console.log('astChildren', astChildren);
-
-      const contentWithLoc = content.map((contentBlock, index) => {
-        const {start, end} = astChildren[index].loc;
-        return {
-          ...contentBlock, 
-          location: {
-            start,
-            end
-          }
-        }
-      })
-
-      result.content = contentWithLoc;
-    }
-
-    const {start, end} = astBlock.loc;
-
-    if (result.block === 'button') {
-      console.log('start', start);
-      console.log('end', end);
-    }
+    return applyLocationsToBlock(result, astBlock);
+    // if (result.content) {
     
-    return {
-      ...result, 
-      location: {
-        start,
-        end
-      }
-    }
+    //   let content = [].concat(result.content);
+       
+    //   let astChildren = getASTChildrenOf(astBlock);
+    //   // console.log('content', content);
+    //   // console.log('astChildren', astChildren);
+
+    //   const contentWithLoc = content.map((contentBlock, index) => {
+    //     const {start, end} = astChildren[index].loc;
+    //     return {
+    //       ...contentBlock, 
+    //       location: {
+    //         start,
+    //         end
+    //       }
+    //     }
+    //   })
+
+    //   result.content = contentWithLoc;
+    // }
+
+    // const {start, end} = astBlock.loc;
+
+    // return {
+    //   ...result, 
+    //   location: {
+    //     start,
+    //     end
+    //   }
+    // }
   });
 
   return blockWithLocation;

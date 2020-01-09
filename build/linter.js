@@ -2771,14 +2771,13 @@ function lint(jsonString) {
   const blocks = (0, _blocksService.getBlocks)(jsonString);
   const errors = linter.lint(blocks);
   console.log(errors);
-  console.log('\n\n\n');
   return errors;
 }
 
 global.lint = lint;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./linter":7,"./services/blocksService":18}],3:[function(require,module,exports){
+},{"./linter":7,"./services/blocksService":19}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2972,7 +2971,7 @@ class Linter {
 
 exports.default = Linter;
 
-},{"../services/blocksService":18,"./text":12,"./warning":15}],9:[function(require,module,exports){
+},{"../services/blocksService":19,"./text":12,"./warning":15}],9:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2988,7 +2987,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function checkH1Severalty(blocks) {
   const h1Headers = blocks.filter(block => {
-    return block.block === 'text' && block.mods.type === 'h1';
+    return block.block === 'text' && !block.elem && block.mods.type === 'h1';
   });
 
   if (h1Headers.length < 1) {
@@ -3027,10 +3026,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function checkH2Position(blocks) {
   const h2Headers = blocks.filter(block => {
-    return block.block === 'text' && block.mods.type === 'h2';
+    return block.block === 'text' && !block.elem && block.mods.type === 'h2';
   });
   const h1Header = blocks.find(block => {
-    return block.block === 'text' && block.mods.type === 'h1';
+    return block.block === 'text' && !block.elem && block.mods.type === 'h1';
   });
 
   if (h2Headers.length === 0 || !h1Header) {
@@ -3074,10 +3073,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function checkH3Position(blocks) {
   const h3Headers = blocks.filter(block => {
-    return block.block === 'text' && block.mods.type === 'h3';
+    return block.block === 'text' && !block.elem && block.mods.type === 'h3';
   });
   const h2Headers = blocks.filter(block => {
-    return block.block === 'text' && block.mods.type === 'h2';
+    return block.block === 'text' && !block.elem && block.mods.type === 'h2';
   });
 
   if (h3Headers.length === 0 || h2Headers.length === 0) {
@@ -3193,7 +3192,7 @@ function checkButtonPosition(warningBlock) {
 var _default = checkButtonPosition;
 exports.default = _default;
 
-},{"../../services/blocksService":18,"../errors/linterError":4,"../errors/warning":6}],14:[function(require,module,exports){
+},{"../../services/blocksService":19,"../errors/linterError":4,"../errors/warning":6}],14:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3238,6 +3237,7 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
 };
 
 function checkButtonSize(warningBlock) {
+  console.log('waeningBlock', warningBlock.content[1]);
   const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
   const buttons = nodes.filter(node => {
     return node.block === 'button';
@@ -3258,6 +3258,7 @@ function checkButtonSize(warningBlock) {
 
   if (!isSizesValid) {
     const errors = invalidButtons.map(button => {
+      console.log(button);
       const error = new _linterError.default(_warning.default.buttonSize, button.location);
       return error;
     });
@@ -3270,7 +3271,7 @@ function checkButtonSize(warningBlock) {
 var _default = checkButtonSize;
 exports.default = _default;
 
-},{"../../services/blocksService":18,"../errors/linterError":4,"../errors/warning":6}],15:[function(require,module,exports){
+},{"../../services/blocksService":19,"../errors/linterError":4,"../errors/warning":6}],15:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3344,7 +3345,7 @@ function checkPlaceholderSize(warningBlock) {
 var _default = checkPlaceholderSize;
 exports.default = _default;
 
-},{"../../services/blocksService":18,"../enums/sizes":3,"../errors/linterError":4,"../errors/warning":6}],17:[function(require,module,exports){
+},{"../../services/blocksService":19,"../enums/sizes":3,"../errors/linterError":4,"../errors/warning":6}],17:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3393,7 +3394,80 @@ function checkTextDifference(warningBlock) {
 var _default = checkTextDifference;
 exports.default = _default;
 
-},{"../../services/blocksService":18,"../errors/linterError":4,"../errors/warning":6}],18:[function(require,module,exports){
+},{"../../services/blocksService":19,"../errors/linterError":4,"../errors/warning":6}],18:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getASTChildrenOf = getASTChildrenOf;
+exports.convertAstTreeToList = convertAstTreeToList;
+
+function getASTChildrenOf(node) {
+  if (!node.children) {
+    return [];
+  }
+
+  if (node.type === 'Array') {
+    return node.children;
+  }
+
+  const contentProperty = node.children.find(child => {
+    return child.key.value === 'content';
+  }); // Нет контента
+
+  if (!contentProperty) {
+    return [];
+  }
+
+  const contentValue = contentProperty.value;
+
+  if (contentValue.type === "Array") {
+    return contentValue.children;
+  } // Контент - объект
+
+
+  return [contentProperty.value];
+}
+
+function convertAstTreeToList(root) {
+  let stack = [],
+      array = []; // Root - всегда объект с полем type (Array либо Object)
+
+  const rootIsArray = root.type === 'Array';
+
+  if (rootIsArray) {
+    stack.push(...root.children);
+  } else {
+    stack.push(root);
+  }
+
+  while (stack.length !== 0) {
+    let node = stack.shift(); // В контенте можно встретить массивы объектов на одном уровне с объектами;
+    // if (node.type === 'Array') {
+    //   stack.unshift(...node.children);
+    //   continue;
+    // }
+
+    array.push(node);
+    const nodeChildren = getASTChildrenOf(node); // console.log('node', node);
+    // node.children.forEach(child => {
+    //   console.log('child', child)
+    // });
+    // console.log('\n');
+    // console.log('nodeChildren', nodeChildren)
+
+    if (nodeChildren.length === 0) {
+      continue;
+    } else {
+      stack.unshift(...nodeChildren);
+    }
+  }
+
+  return array;
+}
+
+},{}],19:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3405,7 +3479,25 @@ exports.findBlocksIn = findBlocksIn;
 
 var _jsonToAst = _interopRequireDefault(require("json-to-ast"));
 
+var _astService = require("./astService");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function getChildrenOf(node) {
+  // Получаем контент массива
+  if (Array.isArray(node)) {
+    return node;
+  }
+
+  const content = node.content;
+
+  if (!content) {
+    return [];
+  } // Контент - объект
+
+
+  return [].concat(content);
+}
 
 function convertTreeToList(root) {
   let stack = [],
@@ -3423,17 +3515,17 @@ function convertTreeToList(root) {
 
   while (stack.length !== 0) {
     let node = stack.shift(); // В контенте можно встретить массивы объектов на одном уровне с объектами;
+    // if (Array.isArray(node)) {
+    //   depth++;
+    //   stack.unshift(...node);
+    //   continue;
+    // }
 
-    if (Array.isArray(node)) {
-      stack.unshift(...node);
-      continue;
-    }
-
-    node.depth = depth; // console.log('node', node)
-
+    node.depth = depth;
     array.push(node);
+    const nodeChildren = getChildrenOf(node);
 
-    if (!node.content) {
+    if (nodeChildren.length === 0) {
       if (isPreviousDeeper) {
         depth--;
         isPreviousDeeper = true;
@@ -3443,12 +3535,7 @@ function convertTreeToList(root) {
     } else {
       isPreviousDeeper = false;
       depth++;
-
-      if (Array.isArray(node.content)) {
-        stack.unshift(...node.content);
-      } else {
-        stack.unshift(node.content);
-      }
+      stack.unshift(...nodeChildren);
     }
   }
 
@@ -3467,66 +3554,35 @@ function isBlock(node) {
   return false;
 }
 
-function getChildrenOf(node) {
-  if (node.type === 'Array') {
-    return node.children;
-  }
-
-  if (!node.children) {
-    return null;
-  }
-
-  const contentProperty = node.children.find(child => {
-    return child.key.value === 'content';
+function applyLocationsToBlock(block, astBlockRepresentation) {
+  const {
+    start,
+    end
+  } = astBlockRepresentation.loc;
+  const result = { ...block,
+    location: {
+      start,
+      end
+    }
+  };
+  const blockChildren = getChildrenOf(block);
+  const astChildren = (0, _astService.getASTChildrenOf)(astBlockRepresentation);
+  const childrenWithLocation = blockChildren.map((child, index) => {
+    const astChild = astChildren[index];
+    return applyLocationsToBlock(child, astChild);
   });
 
-  if (!contentProperty) {
-    return null;
-  }
-
-  return contentProperty.value;
-}
-
-function convertAstTreeToList(root) {
-  let stack = [],
-      array = []; // Root - всегда объект с полем type (Array либо Object)
-
-  const rootIsArray = root.type === 'Array';
-
-  if (rootIsArray) {
-    stack.push(...root.children);
-  } else {
-    stack.push(root);
-  }
-
-  while (stack.length !== 0) {
-    let node = stack.shift(); // В контенте можно встретить массивы объектов на одном уровне с объектами;
-
-    if (node.type === 'Array') {
-      stack.unshift(...node.children);
-      continue;
-    }
-
-    array.push(node);
-    const nodeChildren = getChildrenOf(node); // console.log('node', node);
-    // node.children.forEach(child => {
-    //   console.log('child', child)
-    // });
-    // console.log('\n');
-    // console.log('nodeChildren', nodeChildren)
-
-    if (!nodeChildren) {
-      continue;
+  if (blockChildren.length > 0) {
+    if (Array.isArray(result.content)) {
+      // Контент - массив
+      result.content = childrenWithLocation;
     } else {
-      if (nodeChildren.type === 'Array') {
-        stack.unshift(...nodeChildren.children);
-      } else {
-        stack.unshift(nodeChildren);
-      }
+      // Контент - объект
+      result.content = childrenWithLocation[0];
     }
   }
 
-  return array;
+  return result;
 }
 
 function getBlocksWithLocation(blocks, astBlocks) {
@@ -3535,43 +3591,31 @@ function getBlocksWithLocation(blocks, astBlocks) {
     const astBlock = astBlocks[index]; // console.log('result', result);
     // console.log('astBlock', astBlock);
 
-    if (result.content) {
-      let content = [].concat(result.content);
-      let astChildren = getChildrenOf(astBlock);
-
-      if (astChildren.type === 'Array') {
-        astChildren = astChildren.children;
-      } else {
-        astChildren = [astChildren];
-      } // console.log('content', content);
-      // console.log('astChildren', astChildren);
-
-
-      const contentWithLoc = content.map((contentBlock, index) => {
-        const {
-          start,
-          end
-        } = astChildren[index].loc;
-        return { ...contentBlock,
-          location: {
-            start,
-            end
-          }
-        };
-      });
-      result.content = contentWithLoc;
-    }
-
-    const {
-      start,
-      end
-    } = astBlock.loc;
-    return { ...result,
-      location: {
-        start,
-        end
-      }
-    };
+    return applyLocationsToBlock(result, astBlock); // if (result.content) {
+    //   let content = [].concat(result.content);
+    //   let astChildren = getASTChildrenOf(astBlock);
+    //   // console.log('content', content);
+    //   // console.log('astChildren', astChildren);
+    //   const contentWithLoc = content.map((contentBlock, index) => {
+    //     const {start, end} = astChildren[index].loc;
+    //     return {
+    //       ...contentBlock, 
+    //       location: {
+    //         start,
+    //         end
+    //       }
+    //     }
+    //   })
+    //   result.content = contentWithLoc;
+    // }
+    // const {start, end} = astBlock.loc;
+    // return {
+    //   ...result, 
+    //   location: {
+    //     start,
+    //     end
+    //   }
+    // }
   });
   return blockWithLocation;
 }
@@ -3592,9 +3636,10 @@ function getBlocks(jsonString) {
 
   const blocksList = convertTreeToList(json);
   const ast = (0, _jsonToAst.default)(jsonString);
-  const astBlocksList = convertAstTreeToList(ast); // console.log(blocksList.length, astBlocksList.length)
-
+  const astBlocksList = (0, _astService.convertAstTreeToList)(ast);
+  console.log(blocksList.length, astBlocksList.length);
   const blocksWithLocation = getBlocksWithLocation(blocksList, astBlocksList);
+  console.log(blocksWithLocation.length);
   return blocksWithLocation;
 }
 
@@ -3604,4 +3649,4 @@ function findBlocksIn(blocks, blockName) {
   });
 }
 
-},{"json-to-ast":1}]},{},[2]);
+},{"./astService":18,"json-to-ast":1}]},{},[2]);
