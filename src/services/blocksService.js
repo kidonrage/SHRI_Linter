@@ -105,12 +105,12 @@ function convertAstTreeToList(root) {
       array.push(node);
       
       const nodeChildren = getChildrenOf(node);
-      console.log('node', node);
+      // console.log('node', node);
       // node.children.forEach(child => {
       //   console.log('child', child)
       // });
-      console.log('\n');
-      console.log('nodeChildren', nodeChildren)
+      // console.log('\n');
+      // console.log('nodeChildren', nodeChildren)
 
       if (!nodeChildren) {
         continue;
@@ -192,10 +192,7 @@ export function getBlocks(jsonString) {
   const ast = parse(jsonString);
   const astBlocksList = convertAstTreeToList(ast);
 
-  console.log(blocksList.length, astBlocksList.length)
-  if (blocksList.length !== astBlocksList.length) {
-    console.error('Blocks count != ASTBlocks count');
-  }
+  // console.log(blocksList.length, astBlocksList.length)
 
   const blocksWithLocation = getBlocksWithLocation(blocksList, astBlocksList);
 
