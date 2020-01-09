@@ -15,6 +15,16 @@ const testInputs = [
     json: `{
       "block": "warning",
       "content": [
+        { "block": "placeholder", "mods": { "size": "xl" }},
+        { "block": "placeholder", "mods": { "size": "xl" }}
+      ]
+    }`,
+    expectedErrors: 2
+  },
+  {
+    json: `{
+      "block": "warning",
+      "content": [
         { "block": "placeholder", "mods": { "size": "m" }}
       ]
     }`,
