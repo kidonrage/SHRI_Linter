@@ -6,34 +6,40 @@ import sizes from '../enums/sizes';
 function checkButtonSize(warningBlock) {
   const nodes = convertTreeToList(warningBlock);
 
-  const button = nodes.find((node) => {
+  const buttons = nodes.filter((node) => {
     return node.block === 'button';
   });
   const firstTextBlock = nodes.find((node) => {
     return node.block === 'text';
   });
 
-  if (!button || !firstTextBlock) {
-    return null
+  if (buttons.length < 1 || !firstTextBlock) {
+    return []
   }
 
-  const standardSize = firstTextBlock.mods.size;
-  const standardSizeIdx = sizes.indexOf(standardSize);
+  const referenceSize = firstTextBlock.mods.size;
+  const referenceSizeIdx = sizes.indexOf(referenceSize);
 
-  const buttonSize = button.mods.size;
+  const invalidButtons = buttons.filter((button) => {
+    return button.mods.size !== sizes[referenceSizeIdx + 1];
+  });
 
-  const isSizesValid = buttonSize === sizes[standardSizeIdx + 1];
+  const isSizesValid = invalidButtons.length === 0;
 
   if (!isSizesValid) {
-    const error = new LinterError(
-      warningErrors.buttonSize,
-      button.location
-    )
+    const errors = invalidButtons.map((button) => {
+      const error = new LinterError(
+        warningErrors.buttonSize,
+        button.location
+      )
+    
+      return error;
+    });
   
-    return error;
+    return errors;
   }
 
-  return null;
+  return [];
 }
 
 export default checkButtonSize;
