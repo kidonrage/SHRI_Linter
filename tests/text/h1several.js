@@ -1,6 +1,7 @@
 import chai from 'chai';
 import lint from '../../src/index';
-import largeJSON from './largejson';
+import indexJSON from './indexpage';
+import productJSON from './productpage';
 
 const testInputs = [
   {
@@ -112,10 +113,14 @@ const testInputs = [
     ]`,
     expectedErrors: 2
   },
-  // {
-  //   json: largeJSON,
-  //   expectedErrors: 0
-  // }
+  {
+    json: indexJSON,
+    expectedErrors: 1
+  },
+  {
+    json: productJSON,
+    expectedErrors: 0
+  }
 ]
 
 export default function h1Several() {
