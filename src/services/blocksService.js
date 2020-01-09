@@ -6,7 +6,6 @@ export function convertTreeToList(root) {
   const rootIsArray = Array.isArray(root)
   if (rootIsArray) {
     stack.push(...root);
-    console.log('stack', stack)
   } else {
     stack.push(root);
   }
@@ -16,9 +15,16 @@ export function convertTreeToList(root) {
 
   while(stack.length !== 0) {
       let node = stack.shift();
+
+      // В контенте можно встретить массивы объектов на одном уровне с объектами;
+      if (Array.isArray(node)) {
+        stack.unshift(...node);
+        continue;
+      }
+
       node.depth = depth;
 
-      console.log('node', node)
+      // console.log('node', node)
 
       array.push(node);
 
@@ -32,9 +38,11 @@ export function convertTreeToList(root) {
       } else {
         isPreviousDeeper = false;
         depth++;
-        console.log('node.content', node.content)
+
         if (Array.isArray(node.content)) {
           stack.unshift(...node.content)
+        } else {
+          stack.unshift(node.content)
         }
       }
   }
@@ -59,20 +67,25 @@ function getChildrenOf(node) {
     return node.children;
   }
 
+  if (!node.children) {
+    return null;
+  }
+
   const contentProperty = node.children.find((child) => {
     return child.key.value === 'content'
   })
 
   if (!contentProperty) {
-    return []
+    return null
   }
 
-  return contentProperty.value.children
+  return contentProperty.value
 }
 
 function convertAstTreeToList(root) {
   let stack = [], array = [];
 
+  // Root - всегда объект с полем type (Array либо Object)
   const rootIsArray = root.type === 'Array'
   if (rootIsArray) {
     stack.push(...root.children);
@@ -83,14 +96,30 @@ function convertAstTreeToList(root) {
   while(stack.length !== 0) {
       let node = stack.shift();
 
+      // В контенте можно встретить массивы объектов на одном уровне с объектами;
+      if (node.type === 'Array') {
+        stack.unshift(...node.children);
+        continue;
+      }
+
       array.push(node);
       
       const nodeChildren = getChildrenOf(node);
+      console.log('node', node);
+      // node.children.forEach(child => {
+      //   console.log('child', child)
+      // });
+      console.log('\n');
+      console.log('nodeChildren', nodeChildren)
 
-      if (nodeChildren.length === 0) {
+      if (!nodeChildren) {
         continue;
       } else {
-        stack.unshift(...nodeChildren)
+        if (nodeChildren.type === 'Array') {
+          stack.unshift(...nodeChildren.children);
+        } else {
+          stack.unshift(nodeChildren)
+        }
       }
   }
 
@@ -103,10 +132,22 @@ function getBlocksWithLocation(blocks, astBlocks) {
 
     const astBlock = astBlocks[index];
 
-    if (result.content) {
-      const astChildren = getChildrenOf(astBlock);
+    // console.log('result', result);
+    // console.log('astBlock', astBlock);
 
-      const contentWithLoc = result.content.map((contentBlock, index) => {
+    if (result.content) {
+      let content = [].concat(result.content);
+       
+      let astChildren = getChildrenOf(astBlock);
+      if (astChildren.type === 'Array') {
+        astChildren = astChildren.children;
+      } else {
+        astChildren = [astChildren];
+      }
+      // console.log('content', content);
+      // console.log('astChildren', astChildren);
+
+      const contentWithLoc = content.map((contentBlock, index) => {
         const {start, end} = astChildren[index].loc;
         return {
           ...contentBlock, 
@@ -147,12 +188,17 @@ export function getBlocks(jsonString) {
   }
   
   const blocksList = convertTreeToList(json);
-  console.log('blockList', blocksList);
 
   const ast = parse(jsonString);
   const astBlocksList = convertAstTreeToList(ast);
 
+  console.log(blocksList.length, astBlocksList.length)
+  if (blocksList.length !== astBlocksList.length) {
+    console.error('Blocks count != ASTBlocks count');
+  }
+
   const blocksWithLocation = getBlocksWithLocation(blocksList, astBlocksList);
+
   return blocksWithLocation;
 }
 

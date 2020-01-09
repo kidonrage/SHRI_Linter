@@ -2769,14 +2769,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function lint(jsonString) {
   const linter = new _linter.default();
   const blocks = (0, _blocksService.getBlocks)(jsonString);
-  blocks.forEach(block => {
-    console.log('block location', block.location);
-  });
   const errors = linter.lint(blocks);
   console.log(errors);
-  errors.forEach(error => {
-    console.log('error.location', error.location);
-  });
+  console.log('\n\n\n');
   return errors;
 }
 
@@ -3368,7 +3363,6 @@ function convertTreeToList(root) {
 
   if (rootIsArray) {
     stack.push(...root);
-    console.log('stack', stack);
   } else {
     stack.push(root);
   }
@@ -3377,9 +3371,15 @@ function convertTreeToList(root) {
   let isPreviousDeeper = false;
 
   while (stack.length !== 0) {
-    let node = stack.shift();
-    node.depth = depth;
-    console.log('node', node);
+    let node = stack.shift(); // В контенте можно встретить массивы объектов на одном уровне с объектами;
+
+    if (Array.isArray(node)) {
+      stack.unshift(...node);
+      continue;
+    }
+
+    node.depth = depth; // console.log('node', node)
+
     array.push(node);
 
     if (!node.content) {
@@ -3392,10 +3392,11 @@ function convertTreeToList(root) {
     } else {
       isPreviousDeeper = false;
       depth++;
-      console.log('node.content', node.content);
 
       if (Array.isArray(node.content)) {
         stack.unshift(...node.content);
+      } else {
+        stack.unshift(node.content);
       }
     }
   }
@@ -3420,20 +3421,25 @@ function getChildrenOf(node) {
     return node.children;
   }
 
+  if (!node.children) {
+    return null;
+  }
+
   const contentProperty = node.children.find(child => {
     return child.key.value === 'content';
   });
 
   if (!contentProperty) {
-    return [];
+    return null;
   }
 
-  return contentProperty.value.children;
+  return contentProperty.value;
 }
 
 function convertAstTreeToList(root) {
   let stack = [],
-      array = [];
+      array = []; // Root - всегда объект с полем type (Array либо Object)
+
   const rootIsArray = root.type === 'Array';
 
   if (rootIsArray) {
@@ -3443,14 +3449,30 @@ function convertAstTreeToList(root) {
   }
 
   while (stack.length !== 0) {
-    let node = stack.shift();
+    let node = stack.shift(); // В контенте можно встретить массивы объектов на одном уровне с объектами;
+
+    if (node.type === 'Array') {
+      stack.unshift(...node.children);
+      continue;
+    }
+
     array.push(node);
     const nodeChildren = getChildrenOf(node);
+    console.log('node', node); // node.children.forEach(child => {
+    //   console.log('child', child)
+    // });
 
-    if (nodeChildren.length === 0) {
+    console.log('\n');
+    console.log('nodeChildren', nodeChildren);
+
+    if (!nodeChildren) {
       continue;
     } else {
-      stack.unshift(...nodeChildren);
+      if (nodeChildren.type === 'Array') {
+        stack.unshift(...nodeChildren.children);
+      } else {
+        stack.unshift(nodeChildren);
+      }
     }
   }
 
@@ -3460,11 +3482,22 @@ function convertAstTreeToList(root) {
 function getBlocksWithLocation(blocks, astBlocks) {
   const blockWithLocation = blocks.map((block, index) => {
     let result = block;
-    const astBlock = astBlocks[index];
+    const astBlock = astBlocks[index]; // console.log('result', result);
+    // console.log('astBlock', astBlock);
 
     if (result.content) {
-      const astChildren = getChildrenOf(astBlock);
-      const contentWithLoc = result.content.map((contentBlock, index) => {
+      let content = [].concat(result.content);
+      let astChildren = getChildrenOf(astBlock);
+
+      if (astChildren.type === 'Array') {
+        astChildren = astChildren.children;
+      } else {
+        astChildren = [astChildren];
+      } // console.log('content', content);
+      // console.log('astChildren', astChildren);
+
+
+      const contentWithLoc = content.map((contentBlock, index) => {
         const {
           start,
           end
@@ -3508,9 +3541,14 @@ function getBlocks(jsonString) {
   }
 
   const blocksList = convertTreeToList(json);
-  console.log('blockList', blocksList);
   const ast = (0, _jsonToAst.default)(jsonString);
   const astBlocksList = convertAstTreeToList(ast);
+  console.log(blocksList.length, astBlocksList.length);
+
+  if (blocksList.length !== astBlocksList.length) {
+    console.error('Blocks count != ASTBlocks count');
+  }
+
   const blocksWithLocation = getBlocksWithLocation(blocksList, astBlocksList);
   return blocksWithLocation;
 }
