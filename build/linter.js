@@ -2950,7 +2950,7 @@ class Linter {
     }
 
     const errors = blocksToCheck.map(block => {
-      return [...textDifference(block), ...buttonSize(block), buttonPosition(block), placeholderSize(block)];
+      return [...textDifference(block), ...buttonSize(block), ...buttonPosition(block), placeholderSize(block)];
     }); // 2d warning errors array to 1d
 
     const flatErrors = [].concat(...errors).filter(error => error != null);
@@ -3154,27 +3154,40 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function checkButtonPosition(warningBlock) {
   const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
-  const button = nodes.find(node => {
+  const buttons = nodes.filter(node => {
     return node.block === 'button';
   });
-  const placeholder = nodes.find(node => {
+  const placeholders = nodes.filter(node => {
     return node.block === 'placeholder';
   });
 
-  if (!button || !placeholder) {
-    return null;
+  if (buttons.length === 0 || placeholders.length === 0) {
+    return [];
   }
 
-  const buttonIndex = nodes.indexOf(button);
-  const placeholderIndex = nodes.indexOf(placeholder);
-  const isPositionValid = buttonIndex > placeholderIndex;
+  const invalidButtons = placeholders.filter(placeholder => {
+    let isInvalid = false;
+    const placeholderIndex = nodes.indexOf(placeholder);
+    buttons.forEach(button => {
+      const buttonIndex = nodes.indexOf(button);
 
-  if (!isPositionValid) {
-    const error = new _linterError.default(_warning.default.buttonPosition, button.location);
-    return error;
+      if (buttonIndex < placeholderIndex && button.depth >= placeholder.depth) {
+        isInvalid = true;
+      }
+    });
+    return isInvalid;
+  });
+  const isButtonsValid = invalidButtons.length === 0;
+
+  if (!isButtonsValid) {
+    const errors = invalidButtons.map(invalidButton => {
+      const error = new _linterError.default(_warning.default.buttonPosition, invalidButton.location);
+      return error;
+    });
+    return errors;
   }
 
-  return null;
+  return [];
 }
 
 var _default = checkButtonPosition;
