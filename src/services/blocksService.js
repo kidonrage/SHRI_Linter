@@ -1,6 +1,27 @@
 import parse from 'json-to-ast';
 import {convertAstTreeToList, getASTChildrenOf} from './astService';
 
+function getMixedBlocksOf(node) {
+  if (Array.isArray(node)) {
+    return [];
+  }
+
+  const mixValue = node.mix;
+
+  if (!mixValue || mixValue.length === 0) {
+    return [];
+  }
+
+  let mixedBlocks = [];
+  if (Array.isArray(mixValue)) {
+    mixedBlocks = mixValue.filter(mixin => mixin.block && !mixin.elem);
+  } else if (mixValue.block && !mixValue.elem) {
+    mixedBlocks.push(mixValue);
+  }
+
+  return [].concat(mixedBlocks);
+}
+
 function getChildrenOf(node) {
   // Получаем контент массива
   if (Array.isArray(node)) {
@@ -43,6 +64,14 @@ export function convertTreeToList(root) {
       node.depth = depth;
 
       array.push(node);
+
+      const nodeMixins = getMixedBlocksOf(node).map((mixedBlock) => {
+        return {
+          ...mixedBlock,
+          depth: depth
+        }
+      });
+      array.push(...nodeMixins);
 
       const nodeChildren = getChildrenOf(node)
 

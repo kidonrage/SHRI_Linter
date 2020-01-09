@@ -1,3 +1,45 @@
+function getMixedASTBlocksOf(node) {
+  if (node.type === 'Array') {
+    return [];
+  }
+
+  const mixProperty = node.children.find((child) => {
+    return child.key.value === 'mix'
+  });
+
+  if (!mixProperty || mixProperty.value === 0) {
+    return [];
+  }
+
+  const mixValue = mixProperty.value
+
+  let mixedBlocks = [];
+  if (mixValue.type === 'Array') {
+    mixedBlocks = mixValue.children.filter(mixin => {
+      const blockProperty = mixin.children.find((child) => {
+        return child.key.value === 'block'
+      })
+      const elemProperty = mixin.children.find((child) => {
+        return child.key.value === 'elem'
+      })
+      return blockProperty && !elemProperty
+    });
+  } else {
+    const blockProperty = mixin.children.find((child) => {
+      return child.key.value === 'block'
+    })
+    const elemProperty = mixin.children.find((child) => {
+      return child.key.value === 'elem'
+    })
+
+    if (blockProperty && !elemProperty) {
+      mixedBlock.push(mixValue);
+    }
+  }
+
+  return [].concat(mixedBlocks);
+}
+
 export function getASTChildrenOf(node) {
   if (!node.children) {
     return [];
@@ -47,6 +89,9 @@ export function convertAstTreeToList(root) {
       // }
 
       array.push(node);
+
+      const nodeMixins = getMixedASTBlocksOf(node);
+      array.push(...nodeMixins);
       
       const nodeChildren = getASTChildrenOf(node);
       // console.log('node', node);

@@ -3403,6 +3403,48 @@ Object.defineProperty(exports, "__esModule", {
 exports.getASTChildrenOf = getASTChildrenOf;
 exports.convertAstTreeToList = convertAstTreeToList;
 
+function getMixedASTBlocksOf(node) {
+  if (node.type === 'Array') {
+    return [];
+  }
+
+  const mixProperty = node.children.find(child => {
+    return child.key.value === 'mix';
+  });
+
+  if (!mixProperty || mixProperty.value === 0) {
+    return [];
+  }
+
+  const mixValue = mixProperty.value;
+  let mixedBlocks = [];
+
+  if (mixValue.type === 'Array') {
+    mixedBlocks = mixValue.children.filter(mixin => {
+      const blockProperty = mixin.children.find(child => {
+        return child.key.value === 'block';
+      });
+      const elemProperty = mixin.children.find(child => {
+        return child.key.value === 'elem';
+      });
+      return blockProperty && !elemProperty;
+    });
+  } else {
+    const blockProperty = mixin.children.find(child => {
+      return child.key.value === 'block';
+    });
+    const elemProperty = mixin.children.find(child => {
+      return child.key.value === 'elem';
+    });
+
+    if (blockProperty && !elemProperty) {
+      mixedBlock.push(mixValue);
+    }
+  }
+
+  return [].concat(mixedBlocks);
+}
+
 function getASTChildrenOf(node) {
   if (!node.children) {
     return [];
@@ -3450,6 +3492,8 @@ function convertAstTreeToList(root) {
     // }
 
     array.push(node);
+    const nodeMixins = getMixedASTBlocksOf(node);
+    array.push(...nodeMixins);
     const nodeChildren = getASTChildrenOf(node); // console.log('node', node);
     // node.children.forEach(child => {
     //   console.log('child', child)
@@ -3482,6 +3526,28 @@ var _jsonToAst = _interopRequireDefault(require("json-to-ast"));
 var _astService = require("./astService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function getMixedBlocksOf(node) {
+  if (Array.isArray(node)) {
+    return [];
+  }
+
+  const mixValue = node.mix;
+
+  if (!mixValue || mixValue.length === 0) {
+    return [];
+  }
+
+  let mixedBlocks = [];
+
+  if (Array.isArray(mixValue)) {
+    mixedBlocks = mixValue.filter(mixin => mixin.block && !mixin.elem);
+  } else if (mixValue.block && !mixValue.elem) {
+    mixedBlocks.push(mixValue);
+  }
+
+  return [].concat(mixedBlocks);
+}
 
 function getChildrenOf(node) {
   // Получаем контент массива
@@ -3523,6 +3589,12 @@ function convertTreeToList(root) {
 
     node.depth = depth;
     array.push(node);
+    const nodeMixins = getMixedBlocksOf(node).map(mixedBlock => {
+      return { ...mixedBlock,
+        depth: depth
+      };
+    });
+    array.push(...nodeMixins);
     const nodeChildren = getChildrenOf(node);
 
     if (nodeChildren.length === 0) {
