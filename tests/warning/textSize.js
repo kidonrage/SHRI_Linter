@@ -32,10 +32,11 @@ const testInputs = [
       "block": "warning",
       "content": [
           { "block": "text", "mods": { "size": "l" } },
+          { "block": "text", "mods": { "size": "m" } },
           { "block": "text", "mods": { "size": "m" } }
       ]
     }`,
-    expectedErrors: 1
+    expectedErrors: 2
   },
   {
     json: `{
@@ -46,7 +47,30 @@ const testInputs = [
       ]
     }`,
     expectedErrors: 0
-  }
+  },
+  {
+    json: `[
+      {
+        "block": "warning",
+        "content": [
+            { "block": "text", "mods": { "size": "l" } },
+            { "block": "text", "mods": { "size": "m" } },
+            { "block": "text", "mods": { "size": "m" } }
+        ]
+      },
+      {
+        "block": "warning",
+        "content": [
+            { "block": "text", "mods": { "size": "l" } },
+            { "block": "text", "mods": { "size": "m" } },
+            { "block": "text", "mods": { "size": "m" } },
+            { "block": "text", "mods": { "size": "m" } },
+            { "block": "text", "mods": { "size": "m" } }
+        ]
+      }
+    ]`,
+    expectedErrors: 6
+  },
 ]
 
 export default function textSize() {
