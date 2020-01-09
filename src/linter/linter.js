@@ -44,7 +44,7 @@ export default class Linter {
         ...textDifference(block),
         ...buttonSize(block),
         ...buttonPosition(block),
-        placeholderSize(block)
+        ...placeholderSize(block)
       ]
     });
 

@@ -6,28 +6,34 @@ import {placeholderSizes} from '../enums/sizes';
 function checkPlaceholderSize(warningBlock) {
   const nodes = convertTreeToList(warningBlock);
 
-  const placeholder = nodes.find((node) => {
+  const placeholders = nodes.filter((node) => {
     return node.block === 'placeholder';
   });
 
-  if (!placeholder) {
-    return null
+  if (placeholders.length === 0) {
+    return []
   }
 
-  const placeholderSize = placeholder.mods.size
+  const invalidPlaceholders = placeholders.filter((placeholder) => {
+    return !placeholderSizes.includes(placeholder.mods.size);
+  })
 
-  const isSizeValid = placeholderSizes.includes(placeholderSize);
+  const isPlaceholdersValid = invalidPlaceholders.length === 0;
 
-  if (!isSizeValid) {
-    const error = new LinterError(
-      warningErrors.placeholderSize,
-      placeholder.location
-    )
+  if (!isPlaceholdersValid) {
+    const errors = invalidPlaceholders.map((invalidPlaceholder) => {
+      const error = new LinterError(
+        warningErrors.placeholderSize,
+        invalidPlaceholder.location
+      )
+    
+      return error;
+    });
   
-    return error;
+    return errors;
   }
 
-  return null;
+  return [];
 }
 
 export default checkPlaceholderSize;

@@ -2950,7 +2950,7 @@ class Linter {
     }
 
     const errors = blocksToCheck.map(block => {
-      return [...textDifference(block), ...buttonSize(block), ...buttonPosition(block), placeholderSize(block)];
+      return [...textDifference(block), ...buttonSize(block), ...buttonPosition(block), ...placeholderSize(block)];
     }); // 2d warning errors array to 1d
 
     const flatErrors = [].concat(...errors).filter(error => error != null);
@@ -3317,24 +3317,28 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function checkPlaceholderSize(warningBlock) {
   const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
-  const placeholder = nodes.find(node => {
+  const placeholders = nodes.filter(node => {
     return node.block === 'placeholder';
   });
 
-  if (!placeholder) {
-    return null;
+  if (placeholders.length === 0) {
+    return [];
   }
 
-  const placeholderSize = placeholder.mods.size;
+  const invalidPlaceholders = placeholders.filter(placeholder => {
+    return !_sizes.placeholderSizes.includes(placeholder.mods.size);
+  });
+  const isPlaceholdersValid = invalidPlaceholders.length === 0;
 
-  const isSizeValid = _sizes.placeholderSizes.includes(placeholderSize);
-
-  if (!isSizeValid) {
-    const error = new _linterError.default(_warning.default.placeholderSize, placeholder.location);
-    return error;
+  if (!isPlaceholdersValid) {
+    const errors = invalidPlaceholders.map(invalidPlaceholder => {
+      const error = new _linterError.default(_warning.default.placeholderSize, invalidPlaceholder.location);
+      return error;
+    });
+    return errors;
   }
 
-  return null;
+  return [];
 }
 
 var _default = checkPlaceholderSize;
