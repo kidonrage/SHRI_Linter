@@ -41,7 +41,7 @@ export default class Linter {
 
     const errors = blocksToCheck.map((block) => {
       return [
-        textDifference(block),
+        ...textDifference(block),
         buttonSize(block),
         buttonPosition(block),
         placeholderSize(block)

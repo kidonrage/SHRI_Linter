@@ -2950,7 +2950,7 @@ class Linter {
     }
 
     const errors = blocksToCheck.map(block => {
-      return [textDifference(block), buttonSize(block), buttonPosition(block), placeholderSize(block)];
+      return [...textDifference(block), buttonSize(block), buttonPosition(block), placeholderSize(block)];
     }); // 2d warning errors array to 1d
 
     const flatErrors = [].concat(...errors).filter(error => error != null);
@@ -3322,21 +3322,27 @@ function checkTextDifference(warningBlock) {
   }); // Если в блоке нет текста
 
   if (textBlocks.length === 0) {
-    return null;
+    return [];
   }
 
   const textSizes = textBlocks.map(block => {
-    console.log('block', block);
     return block.mods.size;
   });
-  const isSizesEqual = textSizes.every(size => size === textSizes[0]);
+  const referenceSize = textSizes[0];
+  const invalidSizes = textSizes.filter(size => {
+    return size != referenceSize;
+  });
+  const isSizesEqual = invalidSizes.length === 0;
 
   if (!isSizesEqual) {
-    const error = new _linterError.default(_warning.default.textSize, warningBlock.location);
-    return error;
+    const errors = invalidSizes.map(invalidSize => {
+      const error = new _linterError.default(_warning.default.textSize, warningBlock.location);
+      return error;
+    });
+    return errors;
   }
 
-  return null;
+  return [];
 }
 
 var _default = checkTextDifference;
@@ -3457,13 +3463,12 @@ function convertAstTreeToList(root) {
     }
 
     array.push(node);
-    const nodeChildren = getChildrenOf(node);
-    console.log('node', node); // node.children.forEach(child => {
+    const nodeChildren = getChildrenOf(node); // console.log('node', node);
+    // node.children.forEach(child => {
     //   console.log('child', child)
     // });
-
-    console.log('\n');
-    console.log('nodeChildren', nodeChildren);
+    // console.log('\n');
+    // console.log('nodeChildren', nodeChildren)
 
     if (!nodeChildren) {
       continue;
@@ -3542,12 +3547,7 @@ function getBlocks(jsonString) {
 
   const blocksList = convertTreeToList(json);
   const ast = (0, _jsonToAst.default)(jsonString);
-  const astBlocksList = convertAstTreeToList(ast);
-  console.log(blocksList.length, astBlocksList.length);
-
-  if (blocksList.length !== astBlocksList.length) {
-    console.error('Blocks count != ASTBlocks count');
-  }
+  const astBlocksList = convertAstTreeToList(ast); // console.log(blocksList.length, astBlocksList.length)
 
   const blocksWithLocation = getBlocksWithLocation(blocksList, astBlocksList);
   return blocksWithLocation;

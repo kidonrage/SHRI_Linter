@@ -10,26 +10,35 @@ function checkTextDifference(warningBlock) {
   });
   // Если в блоке нет текста
   if (textBlocks.length === 0) {
-    return null;
+    return [];
   }
 
   const textSizes = textBlocks.map((block) => {
-    console.log('block', block)
     return block.mods.size;
   })
 
-  const isSizesEqual = textSizes.every( size => size === textSizes[0] )
+  const referenceSize = textSizes[0];
+
+  const invalidSizes = textSizes.filter( size => {
+    return size != referenceSize
+  })
+
+  const isSizesEqual = invalidSizes.length === 0;
 
   if (!isSizesEqual) {
-    const error = new LinterError(
-      warningErrors.textSize,
-      warningBlock.location
-    );
+    const errors = invalidSizes.map((invalidSize) => {
+      const error = new LinterError(
+        warningErrors.textSize,
+        warningBlock.location
+      );
+    
+      return error;
+    });
   
-    return error;
+    return errors;
   }
 
-  return null;
+  return [];
 }
 
 export default checkTextDifference;
