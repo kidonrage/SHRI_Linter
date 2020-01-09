@@ -7,8 +7,8 @@ export default function lint(jsonString) {
   const blocks = getBlocks(jsonString);
 
   const errors = linter.lint(blocks);
+
   console.log(errors);
-  console.log('\n\n\n');
 
   return errors;
 }

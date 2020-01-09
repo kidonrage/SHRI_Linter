@@ -1,4 +1,21 @@
 import parse from 'json-to-ast';
+import {convertAstTreeToList, getASTChildrenOf} from './astService';
+
+function getChildrenOf(node) {
+  // Получаем контент массива
+  if (Array.isArray(node)) {
+    return node;
+  }
+
+  const content = node.content;
+
+  if (!content) {
+    return [];
+  }
+
+  // Контент - объект
+  return [].concat(content);
+}
 
 export function convertTreeToList(root) {
   let stack = [], array = [];
@@ -17,18 +34,19 @@ export function convertTreeToList(root) {
       let node = stack.shift();
 
       // В контенте можно встретить массивы объектов на одном уровне с объектами;
-      if (Array.isArray(node)) {
-        stack.unshift(...node);
-        continue;
-      }
+      // if (Array.isArray(node)) {
+      //   depth++;
+      //   stack.unshift(...node);
+      //   continue;
+      // }
 
       node.depth = depth;
 
-      // console.log('node', node)
-
       array.push(node);
 
-      if(!node.content) {
+      const nodeChildren = getChildrenOf(node)
+
+      if(nodeChildren.length === 0) {
         if (isPreviousDeeper) {
           depth--;
           isPreviousDeeper = true
@@ -39,11 +57,7 @@ export function convertTreeToList(root) {
         isPreviousDeeper = false;
         depth++;
 
-        if (Array.isArray(node.content)) {
-          stack.unshift(...node.content)
-        } else {
-          stack.unshift(node.content)
-        }
+        stack.unshift(...nodeChildren)
       }
   }
 
@@ -62,90 +76,21 @@ function isBlock(node) {
   return false;
 }
 
-function getChildrenOf(node) {
-  if (node.type === 'Array') {
-    return node.children;
-  }
-
-  if (!node.children) {
-    return null;
-  }
-
-  const contentProperty = node.children.find((child) => {
-    return child.key.value === 'content'
-  })
-
-  if (!contentProperty) {
-    return null
-  }
-
-  return contentProperty.value
-}
-
-function convertAstTreeToList(root) {
-  let stack = [], array = [];
-
-  // Root - всегда объект с полем type (Array либо Object)
-  const rootIsArray = root.type === 'Array'
-  if (rootIsArray) {
-    stack.push(...root.children);
-  } else {
-    stack.push(root);
-  }
-
-  while(stack.length !== 0) {
-      let node = stack.shift();
-
-      // В контенте можно встретить массивы объектов на одном уровне с объектами;
-      if (node.type === 'Array') {
-        stack.unshift(...node.children);
-        continue;
-      }
-
-      array.push(node);
-      
-      const nodeChildren = getChildrenOf(node);
-      // console.log('node', node);
-      // node.children.forEach(child => {
-      //   console.log('child', child)
-      // });
-      // console.log('\n');
-      // console.log('nodeChildren', nodeChildren)
-
-      if (!nodeChildren) {
-        continue;
-      } else {
-        if (nodeChildren.type === 'Array') {
-          stack.unshift(...nodeChildren.children);
-        } else {
-          stack.unshift(nodeChildren)
-        }
-      }
-  }
-
-  return array;
-}
-
 function getBlocksWithLocation(blocks, astBlocks) {
   const blockWithLocation = blocks.map((block, index) => {
     let result = block;
 
     const astBlock = astBlocks[index];
 
-    // console.log('result', result);
-    // console.log('astBlock', astBlock);
+    console.log('result', result);
+    console.log('astBlock', astBlock);
 
     if (result.content) {
       let content = [].concat(result.content);
        
-      let astChildren = getChildrenOf(astBlock);
-      if (astChildren.type === 'Array') {
-        astChildren = astChildren.children;
-      } else {
-        astChildren = [astChildren];
-      }
-      // console.log('content', content);
-      // console.log('astChildren', astChildren);
+      let astChildren = getASTChildrenOf(astBlock);
+      console.log('content', content);
+      console.log('astChildren', astChildren);
 
       const contentWithLoc = content.map((contentBlock, index) => {
         const {start, end} = astChildren[index].loc;
@@ -162,6 +107,12 @@ function getBlocksWithLocation(blocks, astBlocks) {
     }
 
     const {start, end} = astBlock.loc;
+
+    if (result.block === 'button') {
+      console.log('start', start);
+      console.log('end', end);
+    }
+    
     return {
       ...result, 
       location: {
@@ -192,9 +143,11 @@ export function getBlocks(jsonString) {
   const ast = parse(jsonString);
   const astBlocksList = convertAstTreeToList(ast);
 
-  // console.log(blocksList.length, astBlocksList.length)
+  console.log(blocksList.length, astBlocksList.length);
 
   const blocksWithLocation = getBlocksWithLocation(blocksList, astBlocksList);
+
+  console.log(blocksWithLocation.length)
 
   return blocksWithLocation;
 }
