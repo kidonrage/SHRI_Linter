@@ -1,7 +1,31 @@
 import LinterError from '../errors/linterError';
 import warningErrors from '../errors/warning';
 import {convertTreeToList} from '../../services/blocksService';
-import sizes from '../enums/sizes';
+
+const isButtonSizeValid = (buttonSize, referenceSize) => {
+  let properButtonSize = '';
+
+  switch (referenceSize.slice(-1)) {
+    case 'm':
+      properButtonSize = 'l';
+      break;
+    case 'l':
+      properButtonSize = 'x' + referenceSize;
+      break;
+    case 's': {
+      if (referenceSize === 's') {
+        properButtonSize = 'm';
+        break;
+      }
+      properButtonSize = referenceSize.substr(1);
+      break;
+    }
+  }
+
+  console.log(buttonSize, properButtonSize, referenceSize)
+
+  return buttonSize === properButtonSize;
+}
 
 function checkButtonSize(warningBlock) {
   const nodes = convertTreeToList(warningBlock);
@@ -18,10 +42,9 @@ function checkButtonSize(warningBlock) {
   }
 
   const referenceSize = firstTextBlock.mods.size;
-  const referenceSizeIdx = sizes.indexOf(referenceSize);
 
   const invalidButtons = buttons.filter((button) => {
-    return button.mods.size !== sizes[referenceSizeIdx + 1];
+    return !(isButtonSizeValid(button.mods.size, referenceSize));
   });
 
   const isSizesValid = invalidButtons.length === 0;

@@ -3194,9 +3194,35 @@ var _warning = _interopRequireDefault(require("../errors/warning"));
 
 var _blocksService = require("../../services/blocksService");
 
-var _sizes = _interopRequireDefault(require("../enums/sizes"));
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const isButtonSizeValid = (buttonSize, referenceSize) => {
+  let properButtonSize = '';
+
+  switch (referenceSize.slice(-1)) {
+    case 'm':
+      properButtonSize = 'l';
+      break;
+
+    case 'l':
+      properButtonSize = 'x' + referenceSize;
+      break;
+
+    case 's':
+      {
+        if (referenceSize === 's') {
+          properButtonSize = 'm';
+          break;
+        }
+
+        properButtonSize = referenceSize.substr(1);
+        break;
+      }
+  }
+
+  console.log(buttonSize, properButtonSize, referenceSize);
+  return buttonSize === properButtonSize;
+};
 
 function checkButtonSize(warningBlock) {
   const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
@@ -3212,11 +3238,8 @@ function checkButtonSize(warningBlock) {
   }
 
   const referenceSize = firstTextBlock.mods.size;
-
-  const referenceSizeIdx = _sizes.default.indexOf(referenceSize);
-
   const invalidButtons = buttons.filter(button => {
-    return button.mods.size !== _sizes.default[referenceSizeIdx + 1];
+    return !isButtonSizeValid(button.mods.size, referenceSize);
   });
   const isSizesValid = invalidButtons.length === 0;
 
@@ -3234,7 +3257,7 @@ function checkButtonSize(warningBlock) {
 var _default = checkButtonSize;
 exports.default = _default;
 
-},{"../../services/blocksService":18,"../enums/sizes":3,"../errors/linterError":4,"../errors/warning":6}],15:[function(require,module,exports){
+},{"../../services/blocksService":18,"../errors/linterError":4,"../errors/warning":6}],15:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
