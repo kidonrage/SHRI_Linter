@@ -5,32 +5,48 @@ import {convertTreeToList} from '../../services/blocksService';
 function checkButtonPosition(warningBlock) {
   const nodes = convertTreeToList(warningBlock);
 
-  const button = nodes.find((node) => {
+  const buttons = nodes.filter((node) => {
     return node.block === 'button';
   });
-  const placeholder = nodes.find((node) => {
+  const placeholders = nodes.filter((node) => {
     return node.block === 'placeholder';
   });
 
-  if (!button || !placeholder) {
-    return null
+  if (buttons.length === 0 || placeholders.length === 0) {
+    return []
   }
 
-  const buttonIndex = nodes.indexOf(button);
-  const placeholderIndex = nodes.indexOf(placeholder);
+  const invalidButtons = placeholders.filter((placeholder) => {
+    let isInvalid = false;
 
-  const isPositionValid = buttonIndex > placeholderIndex;
+    const placeholderIndex = nodes.indexOf(placeholder);
+
+    buttons.forEach(button => {
+      const buttonIndex = nodes.indexOf(button);
+      if (buttonIndex < placeholderIndex && button.depth >= placeholder.depth) {
+        isInvalid = true;
+      }
+    });
+
+    return isInvalid;
+  })
+
+  const isButtonsValid = invalidButtons.length === 0;
   
-  if (!isPositionValid) {
-    const error = new LinterError(
-      warningErrors.buttonPosition,
-      button.location
-    )
-  
-    return error;
+  if (!isButtonsValid) {
+    const errors = invalidButtons.map((invalidButton) => {
+      const error = new LinterError(
+        warningErrors.buttonPosition,
+        invalidButton.location
+      )
+    
+      return error;
+    })
+
+    return errors;
   }
 
-  return null;
+  return [];
 }
 
 export default checkButtonPosition;
