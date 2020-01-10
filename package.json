@@ -6,7 +6,7 @@
   "scripts": {
     "start": "nodemon --exec babel-node src/index.js",
     "build": "browserify src/index.js -o build/linter.js -t [ babelify ]",
-    "test": "mocha tests/lint.js --require @babel/register"
+    "test": "mocha tests/lint.js --require @babel/register --timeout 150000"
   },
   "repository": {
     "type": "git",

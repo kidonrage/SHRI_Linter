@@ -32,6 +32,17 @@ const testInputs = [
       ]
     }`,
     expectedErrors: 0
+  },
+  {
+    json: `{
+      "block": "warning",
+      "content": [
+          { "block": "text", "mods": { "size": "l" } },
+          { "block": "button", "mods": { "size": "xl" } },
+          { "block": "button", "mods": { "size": "s" } }
+      ]
+  }`,
+  expectedErrors: 1
   }
 ]
 
