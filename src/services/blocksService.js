@@ -1,7 +1,7 @@
 import parse from 'json-to-ast';
 import {convertAstTreeToList, getChildASTBlocksIn} from './astService';
 
-const isBlock = (node) => {
+export const isBlock = (node) => {
   return node.content || (node.block && !node.elem);
 }
 
@@ -20,7 +20,6 @@ function getMixedBlocksOf(node) {
 }
 
 function getChildBlocksIn(node) {
-  console.log('nodeee', node)
   let nodeChildren = node;
 
   if (!Array.isArray(node)) {
@@ -29,8 +28,6 @@ function getChildBlocksIn(node) {
   }
 
   const blocks = nodeChildren.filter(child => isBlock(child))
-
-  console.log('child nodeeees', blocks)
   
   return [].concat(blocks);
 }
@@ -159,6 +156,14 @@ export function findBlocksIn(blocks, blockName) {
   })
 }
 
+export function findRootBlocksIn(blocks, rootBlockName) {
+  const gridNodes = findBlocksIn(blocks, rootBlockName);
+
+  return gridNodes.filter((node) => {
+    return !node.elem;
+  })
+}
+
 export function findBlock(list, blockName) {
   return list.find((block) => {
     return block.block === blockName && !block.elem
@@ -182,6 +187,7 @@ export function findAllBlocks(list, blockName) {
 }
 
 export function findAllBlocksWithMod(list, blockName, modName, modValue) {
+  console.log('list', list);
   return list.filter((block) => {
     if (!block.mods) {
       return false

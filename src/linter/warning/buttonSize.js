@@ -22,13 +22,10 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
     }
   }
 
-  console.log(buttonSize, properButtonSize, referenceSize)
-
   return buttonSize === properButtonSize;
 }
 
 function checkButtonSize(warningBlock) {
-  console.log('waeningBlock', warningBlock.content[1]);
   const nodes = convertTreeToList(warningBlock);
 
   const buttons = nodes.filter((node) => {
@@ -52,7 +49,6 @@ function checkButtonSize(warningBlock) {
 
   if (!isSizesValid) {
     const errors = invalidButtons.map((button) => {
-      console.log(button)
       const error = new LinterError(
         warningErrors.buttonSize,
         button.location

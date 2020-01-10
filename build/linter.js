@@ -2768,7 +2768,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function lint(jsonString) {
   const linter = new _linter.default();
-  const blocks = (0, _blocksService.getBlocks)(jsonString);
+  const blocks = [].concat((0, _blocksService.getBlocks)(jsonString));
   const errors = linter.lint(blocks);
   console.log(errors);
   return errors;
@@ -2777,7 +2777,19 @@ function lint(jsonString) {
 global.lint = lint;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./linter":7,"./services/blocksService":19}],3:[function(require,module,exports){
+},{"./linter":11,"./services/blocksService":23}],3:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.marketing = exports.infoFuncTional = void 0;
+const infoFuncTional = ['payment', 'warning', 'product', 'history', 'cover', 'collect', 'articles', 'subscribtion', 'event'];
+exports.infoFuncTional = infoFuncTional;
+const marketing = ['commercial', 'offer'];
+exports.marketing = marketing;
+
+},{}],4:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2790,7 +2802,23 @@ exports.placeholderSizes = placeholderSizes;
 var _default = sizes;
 exports.default = _default;
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+const grid = {
+  advertisements: {
+    code: 'GRID.TOO_MUCH_MARKETING_BLOCKS',
+    desc: 'Маркетинговые блоки занимают больше половины от всех колонок блока grid.'
+  }
+};
+var _default = grid;
+exports.default = _default;
+
+},{}],6:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2830,7 +2858,7 @@ class LinterError {
 
 exports.default = LinterError;
 
-},{}],5:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2854,7 +2882,7 @@ const text = {
 var _default = text;
 exports.default = _default;
 
-},{}],6:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2882,7 +2910,79 @@ const warning = {
 var _default = warning;
 exports.default = _default;
 
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _linterError = _interopRequireDefault(require("../errors/linterError"));
+
+var _grid = _interopRequireDefault(require("../errors/grid"));
+
+var _blocksService = require("../../services/blocksService");
+
+var _contentBlocks = require("../enums/contentBlocks");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function checkAds(gridBlock) {
+  const columnsCount = parseInt(gridBlock.mods['m-columns'], 10);
+  const columnBlocks = (0, _blocksService.convertTreeToList)(gridBlock).filter(child => child.elem === 'fraction');
+  const childBlocks = columnBlocks.map(column => {
+    const columnSize = parseInt(column.elemMods['m-col'], 10);
+    let isMarketing = false;
+    const columnNodesList = (0, _blocksService.convertTreeToList)(column);
+    const block = columnNodesList.find(node => {
+      isMarketing = false;
+
+      if (_contentBlocks.marketing.includes(node.block)) {
+        isMarketing = true;
+      }
+
+      return isMarketing || _contentBlocks.infoFuncTional.includes(node.block);
+    });
+    return { ...block,
+      isMarketing,
+      sizeInColumns: columnSize
+    };
+  });
+  const marketingBlocks = childBlocks.filter(block => block.isMarketing);
+  const marketingColumnsCount = marketingBlocks.map(block => block.sizeInColumns);
+  const isGridValid = marketingColumnsCount / columnsCount < 0.5;
+
+  if (!isGridValid) {
+    const error = new _linterError.default(_grid.default.advertisements, gridBlock.location);
+    return error;
+  }
+
+  return null;
+}
+
+var _default = checkAds;
+exports.default = _default;
+
+},{"../../services/blocksService":23,"../enums/contentBlocks":3,"../errors/grid":5,"../errors/linterError":6}],10:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _advertisements = _interopRequireDefault(require("./advertisements"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const checkers = {
+  advertisements: _advertisements.default
+};
+var _default = checkers;
+exports.default = _default;
+
+},{"./advertisements":9}],11:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2897,7 +2997,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var _default = _linter.default;
 exports.default = _default;
 
-},{"./linter":8}],8:[function(require,module,exports){
+},{"./linter":12}],12:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2911,10 +3011,12 @@ var _warning = _interopRequireDefault(require("./warning"));
 
 var _text = _interopRequireDefault(require("./text"));
 
+var _grid = _interopRequireDefault(require("./grid"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const defaultConfig = {
-  blocks: ['warning', 'text']
+  blocks: ['warning', 'text', 'grid']
 };
 
 class Linter {
@@ -2931,7 +3033,7 @@ class Linter {
       return this[blockName](blocks);
     }); // 2d blocks errors array to 1d
 
-    const flatErrors = [].concat(...errors);
+    const flatErrors = [].concat(...errors).filter(error => error != null);
     return flatErrors;
   }
 
@@ -2943,17 +3045,10 @@ class Linter {
       placeholderSize
     } = _warning.default;
     const blocksToCheck = (0, _blocksService.findBlocksIn)(blocks, 'warning');
-
-    if (!blocksToCheck) {
-      return [];
-    }
-
     const errors = blocksToCheck.map(block => {
       return [...textDifference(block), ...buttonSize(block), ...buttonPosition(block), ...placeholderSize(block)];
-    }); // 2d warning errors array to 1d
-
-    const flatErrors = [].concat(...errors).filter(error => error != null);
-    return flatErrors;
+    });
+    return [].concat(...errors);
   }
 
   text(blocks) {
@@ -2963,15 +3058,25 @@ class Linter {
       h3Position
     } = _text.default;
     const errors = [...h1Severalty(blocks), ...h2Position(blocks), ...h3Position(blocks)];
-    const flatErrors = [].concat(...errors).filter(error => error != null);
-    return flatErrors;
+    return errors;
+  }
+
+  grid(blocks) {
+    const {
+      advertisements
+    } = _grid.default;
+    const blocksToCheck = (0, _blocksService.findRootBlocksIn)(blocks, 'grid');
+    const errors = blocksToCheck.map(block => {
+      return [advertisements(block)];
+    });
+    return [].concat(...errors);
   }
 
 }
 
 exports.default = Linter;
 
-},{"../services/blocksService":19,"./text":12,"./warning":15}],9:[function(require,module,exports){
+},{"../services/blocksService":23,"./grid":10,"./text":16,"./warning":19}],13:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2988,6 +3093,7 @@ var _blocksService = require("../../services/blocksService");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkH1Severalty(blocks) {
+  console.log('sakdnjksabdjk', blocks.length);
   const h1Headers = (0, _blocksService.findAllBlocksWithMod)(blocks, 'text', 'type', 'h1');
 
   if (h1Headers.length < 1) {
@@ -3010,7 +3116,7 @@ function checkH1Severalty(blocks) {
 var _default = checkH1Severalty;
 exports.default = _default;
 
-},{"../../services/blocksService":19,"../errors/linterError":4,"../errors/text":5}],10:[function(require,module,exports){
+},{"../../services/blocksService":23,"../errors/linterError":6,"../errors/text":7}],14:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3055,7 +3161,7 @@ function checkH2Position(blocks) {
 var _default = checkH2Position;
 exports.default = _default;
 
-},{"../../services/blocksService":19,"../errors/linterError":4,"../errors/text":5}],11:[function(require,module,exports){
+},{"../../services/blocksService":23,"../errors/linterError":6,"../errors/text":7}],15:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3107,7 +3213,7 @@ function checkH3Position(blocks) {
 var _default = checkH3Position;
 exports.default = _default;
 
-},{"../../services/blocksService":19,"../errors/linterError":4,"../errors/text":5}],12:[function(require,module,exports){
+},{"../../services/blocksService":23,"../errors/linterError":6,"../errors/text":7}],16:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3131,7 +3237,7 @@ const checkers = {
 var _default = checkers;
 exports.default = _default;
 
-},{"./h1several":9,"./h2position":10,"./h3position":11}],13:[function(require,module,exports){
+},{"./h1several":13,"./h2position":14,"./h3position":15}],17:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3188,7 +3294,7 @@ function checkButtonPosition(warningBlock) {
 var _default = checkButtonPosition;
 exports.default = _default;
 
-},{"../../services/blocksService":19,"../errors/linterError":4,"../errors/warning":6}],14:[function(require,module,exports){
+},{"../../services/blocksService":23,"../errors/linterError":6,"../errors/warning":8}],18:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3228,12 +3334,10 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
       }
   }
 
-  console.log(buttonSize, properButtonSize, referenceSize);
   return buttonSize === properButtonSize;
 };
 
 function checkButtonSize(warningBlock) {
-  console.log('waeningBlock', warningBlock.content[1]);
   const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
   const buttons = nodes.filter(node => {
     return node.block === 'button';
@@ -3254,7 +3358,6 @@ function checkButtonSize(warningBlock) {
 
   if (!isSizesValid) {
     const errors = invalidButtons.map(button => {
-      console.log(button);
       const error = new _linterError.default(_warning.default.buttonSize, button.location);
       return error;
     });
@@ -3267,7 +3370,7 @@ function checkButtonSize(warningBlock) {
 var _default = checkButtonSize;
 exports.default = _default;
 
-},{"../../services/blocksService":19,"../errors/linterError":4,"../errors/warning":6}],15:[function(require,module,exports){
+},{"../../services/blocksService":23,"../errors/linterError":6,"../errors/warning":8}],19:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3294,7 +3397,7 @@ const checkers = {
 var _default = checkers;
 exports.default = _default;
 
-},{"./buttonPosition":13,"./buttonSize":14,"./placeholderSize":16,"./textDifference":17}],16:[function(require,module,exports){
+},{"./buttonPosition":17,"./buttonSize":18,"./placeholderSize":20,"./textDifference":21}],20:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3341,7 +3444,7 @@ function checkPlaceholderSize(warningBlock) {
 var _default = checkPlaceholderSize;
 exports.default = _default;
 
-},{"../../services/blocksService":19,"../enums/sizes":3,"../errors/linterError":4,"../errors/warning":6}],17:[function(require,module,exports){
+},{"../../services/blocksService":23,"../enums/sizes":4,"../errors/linterError":6,"../errors/warning":8}],21:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3390,7 +3493,7 @@ function checkTextDifference(warningBlock) {
 var _default = checkTextDifference;
 exports.default = _default;
 
-},{"../../services/blocksService":19,"../errors/linterError":4,"../errors/warning":6}],18:[function(require,module,exports){
+},{"../../services/blocksService":23,"../errors/linterError":6,"../errors/warning":8}],22:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3434,13 +3537,11 @@ function getMixedASTBlocksOf(node) {
 
 function getChildASTBlocksIn(node) {
   let childNodes = [];
-  console.log('node', node);
 
   if (node.type === 'Array') {
     childNodes = [].concat(node.children);
   } else {
     const contentProperty = findPropertyIn(node, 'content');
-    console.log('contentProperty', contentProperty);
 
     if (contentProperty) {
       const contentValue = contentProperty.value.type === 'Array' ? contentProperty.value.children : contentProperty.value;
@@ -3448,7 +3549,6 @@ function getChildASTBlocksIn(node) {
     }
   }
 
-  console.log('childNodes', childNodes);
   const childBlocks = childNodes.filter(node => {
     return isBlock(node);
   });
@@ -3484,7 +3584,7 @@ function convertAstTreeToList(root) {
   return array;
 }
 
-},{}],19:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3493,10 +3593,12 @@ Object.defineProperty(exports, "__esModule", {
 exports.convertTreeToList = convertTreeToList;
 exports.getBlocks = getBlocks;
 exports.findBlocksIn = findBlocksIn;
+exports.findRootBlocksIn = findRootBlocksIn;
 exports.findBlock = findBlock;
 exports.findBlockWithMod = findBlockWithMod;
 exports.findAllBlocks = findAllBlocks;
 exports.findAllBlocksWithMod = findAllBlocksWithMod;
+exports.isBlock = void 0;
 
 var _jsonToAst = _interopRequireDefault(require("json-to-ast"));
 
@@ -3507,6 +3609,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 const isBlock = node => {
   return node.content || node.block && !node.elem;
 };
+
+exports.isBlock = isBlock;
 
 function getMixedBlocksOf(node) {
   const mixValue = node.mix;
@@ -3521,7 +3625,6 @@ function getMixedBlocksOf(node) {
 }
 
 function getChildBlocksIn(node) {
-  console.log('nodeee', node);
   let nodeChildren = node;
 
   if (!Array.isArray(node)) {
@@ -3530,7 +3633,6 @@ function getChildBlocksIn(node) {
   }
 
   const blocks = nodeChildren.filter(child => isBlock(child));
-  console.log('child nodeeees', blocks);
   return [].concat(blocks);
 }
 
@@ -3646,6 +3748,13 @@ function findBlocksIn(blocks, blockName) {
   });
 }
 
+function findRootBlocksIn(blocks, rootBlockName) {
+  const gridNodes = findBlocksIn(blocks, rootBlockName);
+  return gridNodes.filter(node => {
+    return !node.elem;
+  });
+}
+
 function findBlock(list, blockName) {
   return list.find(block => {
     return block.block === blockName && !block.elem;
@@ -3669,6 +3778,7 @@ function findAllBlocks(list, blockName) {
 }
 
 function findAllBlocksWithMod(list, blockName, modName, modValue) {
+  console.log('list', list);
   return list.filter(block => {
     if (!block.mods) {
       return false;
@@ -3678,4 +3788,4 @@ function findAllBlocksWithMod(list, blockName, modName, modValue) {
   });
 }
 
-},{"./astService":18,"json-to-ast":1}]},{},[2]);
+},{"./astService":22,"json-to-ast":1}]},{},[2]);

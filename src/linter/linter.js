@@ -1,11 +1,13 @@
-import {findBlocksIn} from '../services/blocksService';
+import {findBlocksIn, findRootBlocksIn} from '../services/blocksService';
 import warningCheckers from './warning';
 import textCheckers from './text';
+import gridCheckers from './grid';
 
 const defaultConfig = {
   blocks: [
     'warning',
-    'text'
+    'text',
+    'grid'
   ]
 }
 
@@ -25,7 +27,7 @@ export default class Linter {
     })
 
     // 2d blocks errors array to 1d
-    const flatErrors = [].concat(...errors);
+    const flatErrors = [].concat(...errors).filter((error) => error != null);
 
     return flatErrors;
   }
@@ -34,10 +36,6 @@ export default class Linter {
     const {textDifference, buttonSize, buttonPosition, placeholderSize} = warningCheckers;
 
     const blocksToCheck = findBlocksIn(blocks, 'warning');
-
-    if (!blocksToCheck) {
-      return [];
-    }
 
     const errors = blocksToCheck.map((block) => {
       return [
@@ -48,10 +46,7 @@ export default class Linter {
       ]
     });
 
-    // 2d warning errors array to 1d
-    const flatErrors = [].concat(...errors).filter((error) => error != null);
-
-    return flatErrors;
+    return [].concat(...errors);
   }
 
   text(blocks) {
@@ -63,9 +58,21 @@ export default class Linter {
       ...h3Position(blocks)
     ]
 
-    const flatErrors = [].concat(...errors).filter((error) => error != null);
+    return errors;
+  }
 
-    return flatErrors;
+  grid(blocks) {
+    const {advertisements} = gridCheckers;
+
+    const blocksToCheck = findRootBlocksIn(blocks, 'grid');
+
+    const errors = blocksToCheck.map((block) => {
+      return [
+        advertisements(block),
+      ]
+    });
+
+    return [].concat(...errors);
   }
 
 }

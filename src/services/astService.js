@@ -38,20 +38,15 @@ function getMixedASTBlocksOf(node) {
 export function getChildASTBlocksIn(node) {
   let childNodes = [];
 
-  console.log('node', node);
-
   if (node.type === 'Array') {
     childNodes = [].concat(node.children);
   } else {
     const contentProperty = findPropertyIn(node, 'content');
-    console.log('contentProperty', contentProperty);
     if (contentProperty) {
       const contentValue = contentProperty.value.type === 'Array' ? contentProperty.value.children : contentProperty.value;
       childNodes = [].concat(contentValue);
     }
   }
-
-  console.log('childNodes', childNodes);
 
   const childBlocks = childNodes.filter(node => {
     return isBlock(node);
