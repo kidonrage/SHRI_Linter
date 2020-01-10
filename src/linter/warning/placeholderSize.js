@@ -1,14 +1,12 @@
 import LinterError from '../errors/linterError';
 import warningErrors from '../errors/warning';
-import {convertTreeToList} from '../../services/blocksService';
+import {convertTreeToList, findAllBlocks} from '../../services/blocksService';
 import {placeholderSizes} from '../enums/sizes';
 
 function checkPlaceholderSize(warningBlock) {
   const nodes = convertTreeToList(warningBlock);
 
-  const placeholders = nodes.filter((node) => {
-    return node.block === 'placeholder';
-  });
+  const placeholders = findAllBlocks(nodes, 'placeholder');
 
   if (placeholders.length === 0) {
     return []

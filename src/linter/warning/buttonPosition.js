@@ -1,16 +1,12 @@
 import LinterError from '../errors/linterError';
 import warningErrors from '../errors/warning';
-import {convertTreeToList} from '../../services/blocksService';
+import {convertTreeToList, findAllBlocks} from '../../services/blocksService';
 
 function checkButtonPosition(warningBlock) {
   const nodes = convertTreeToList(warningBlock);
 
-  const buttons = nodes.filter((node) => {
-    return node.block === 'button';
-  });
-  const placeholders = nodes.filter((node) => {
-    return node.block === 'placeholder';
-  });
+  const buttons = findAllBlocks(nodes, 'button');
+  const placeholders = findAllBlocks(nodes, 'placeholder');
 
   if (buttons.length === 0 || placeholders.length === 0) {
     return []
