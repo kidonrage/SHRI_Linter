@@ -3,7 +3,6 @@ import textErrors from '../errors/text';
 import {findAllBlocksWithMod} from '../../services/blocksService';
 
 function checkH1Severalty(blocks) {
-  console.log('sakdnjksabdjk', blocks.length)
   const h1Headers = findAllBlocksWithMod(blocks, 'text', 'type', 'h1');
 
   if (h1Headers.length < 1) {

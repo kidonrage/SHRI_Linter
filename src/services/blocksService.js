@@ -187,7 +187,6 @@ export function findAllBlocks(list, blockName) {
 }
 
 export function findAllBlocksWithMod(list, blockName, modName, modValue) {
-  console.log('list', list);
   return list.filter((block) => {
     if (!block.mods) {
       return false
