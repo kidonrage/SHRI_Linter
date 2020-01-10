@@ -25,7 +25,7 @@ function getChildBlocksIn(node) {
 
   if (!Array.isArray(node)) {
     // Ищем контент объекта и забираем если есть
-    nodeChildren = node.content || [];
+    nodeChildren = node.content ? [].concat(node.content) : [];
   }
 
   const blocks = nodeChildren.filter(child => isBlock(child))

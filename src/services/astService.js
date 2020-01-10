@@ -28,7 +28,7 @@ function getMixedASTBlocksOf(node) {
 
   let mixedNodes = mixValue.type === 'Array' ? mixValue.children : [].concat(mixValue);
   
-  mixedBlocks = mixedNodes.filter(mixin => {
+  const mixedBlocks = mixedNodes.filter(mixin => {
     return isBlock(mixin);
   });
 

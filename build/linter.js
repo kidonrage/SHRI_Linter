@@ -3426,7 +3426,7 @@ function getMixedASTBlocksOf(node) {
 
   const mixValue = mixProperty.value;
   let mixedNodes = mixValue.type === 'Array' ? mixValue.children : [].concat(mixValue);
-  mixedBlocks = mixedNodes.filter(mixin => {
+  const mixedBlocks = mixedNodes.filter(mixin => {
     return isBlock(mixin);
   });
   return mixedBlocks;
@@ -3526,7 +3526,7 @@ function getChildBlocksIn(node) {
 
   if (!Array.isArray(node)) {
     // Ищем контент объекта и забираем если есть
-    nodeChildren = node.content || [];
+    nodeChildren = node.content ? [].concat(node.content) : [];
   }
 
   const blocks = nodeChildren.filter(child => isBlock(child));
