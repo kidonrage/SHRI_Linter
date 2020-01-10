@@ -1,19 +1,10 @@
 import LinterError from '../errors/linterError';
 import textErrors from '../errors/text';
+import {findAllBlocksWithMod} from '../../services/blocksService';
 
 function checkH3Position(blocks) {
-  const h3Headers = blocks.filter((block) => {
-    if (!block.mods) {
-      return false;
-    }
-    return block.block === 'text' && !block.elem && block.mods.type === 'h3';
-  });
-  const h2Headers = blocks.filter((block) => {
-    if (!block.mods) {
-      return false;
-    }
-    return block.block === 'text' && !block.elem && block.mods.type === 'h2';
-  });
+  const h3Headers = findAllBlocksWithMod(blocks, 'text', 'type', 'h3');
+  const h2Headers = findAllBlocksWithMod(blocks, 'text', 'type', 'h2');
 
   if (h3Headers.length === 0 || h2Headers.length === 0) {
     return []

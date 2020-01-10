@@ -1,13 +1,9 @@
 import LinterError from '../errors/linterError';
 import textErrors from '../errors/text';
+import {findAllBlocksWithMod} from '../../services/blocksService';
 
 function checkH1Severalty(blocks) {
-  const h1Headers = blocks.filter((block) => {
-    if (!block.mods) {
-      return false;
-    }
-    return block.block === 'text' && !block.elem && block.mods.type === 'h1';
-  });
+  const h1Headers = findAllBlocksWithMod(blocks, 'text', 'type', 'h1');
 
   if (h1Headers.length < 1) {
     return []

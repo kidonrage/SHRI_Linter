@@ -54,13 +54,6 @@ export function convertTreeToList(root) {
   while(stack.length !== 0) {
       let node = stack.shift();
 
-      // В контенте можно встретить массивы объектов на одном уровне с объектами;
-      // if (Array.isArray(node)) {
-      //   depth++;
-      //   stack.unshift(...node);
-      //   continue;
-      // }
-
       node.depth = depth;
 
       array.push(node);
@@ -142,41 +135,7 @@ function getBlocksWithLocation(blocks, astBlocks) {
 
     const astBlock = astBlocks[index];  
 
-    // console.log('result', result);
-    // console.log('astBlock', astBlock);
-
     return applyLocationsToBlock(result, astBlock);
-    // if (result.content) {
-    
-    //   let content = [].concat(result.content);
-       
-    //   let astChildren = getASTChildrenOf(astBlock);
-    //   // console.log('content', content);
-    //   // console.log('astChildren', astChildren);
-
-    //   const contentWithLoc = content.map((contentBlock, index) => {
-    //     const {start, end} = astChildren[index].loc;
-    //     return {
-    //       ...contentBlock, 
-    //       location: {
-    //         start,
-    //         end
-    //       }
-    //     }
-    //   })
-
-    //   result.content = contentWithLoc;
-    // }
-
-    // const {start, end} = astBlock.loc;
-
-    // return {
-    //   ...result, 
-    //   location: {
-    //     start,
-    //     end
-    //   }
-    // }
   });
 
   return blockWithLocation;
@@ -191,7 +150,7 @@ export function getBlocks(jsonString) {
   try {
     json = JSON.parse(jsonString);
   } catch(e) {
-    console.log('Invalid JSON');
+    console.error('Invalid JSON');
     return []
   }
   
@@ -213,4 +172,36 @@ export function findBlocksIn(blocks, blockName) {
   return blocks.filter((block) => {
     return block.block === blockName;
   })
+}
+
+export function findBlock(list, blockName) {
+  return list.find((block) => {
+    return block.block === blockName && !block.elem
+  });
+}
+
+export function findBlockWithMod(list, blockName, modName, modValue) {
+  return list.find((block) => {
+    if (!block.mods) {
+      return false
+    }
+
+    return block.block === blockName && !block.elem && block.mods[modName] === modValue;
+  }); 
+}
+
+export function findAllBlocks(list, blockName) {
+  return list.filter((block) => {
+    return block.block === blockName && !block.elem
+  }); 
+}
+
+export function findAllBlocksWithMod(list, blockName, modName, modValue) {
+  return list.filter((block) => {
+    if (!block.mods) {
+      return false
+    }
+
+    return block.block === blockName && !block.elem && block.mods[modName] === modValue;
+  }); 
 }
