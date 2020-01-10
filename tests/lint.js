@@ -1,5 +1,6 @@
 import warningTests from './warning';
 import textTests from './text';
+import gridTests from './grid';
 
 describe("lint", function() {
 
@@ -13,5 +14,7 @@ describe("lint", function() {
   it("Проверяет единственность заголовка первого уровня", textTests.h1Several);
   it("Проверяет положение заголовка второго уровня", textTests.h2Position);
   it("Проверяет положение заголовка третьего уровня", textTests.h3Position);
+
+  it("Проверяет что маркетинговые блоки занимают не больше половины от всех колонок блока grid", gridTests.advertisements);
 
 });
