@@ -2987,6 +2987,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function checkH1Severalty(blocks) {
   const h1Headers = blocks.filter(block => {
+    if (!block.mods) {
+      return false;
+    }
+
     return block.block === 'text' && !block.elem && block.mods.type === 'h1';
   });
 
@@ -3026,9 +3030,17 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function checkH2Position(blocks) {
   const h2Headers = blocks.filter(block => {
+    if (!block.mods) {
+      return false;
+    }
+
     return block.block === 'text' && !block.elem && block.mods.type === 'h2';
   });
   const h1Header = blocks.find(block => {
+    if (!block.mods) {
+      return false;
+    }
+
     return block.block === 'text' && !block.elem && block.mods.type === 'h1';
   });
 
@@ -3073,9 +3085,17 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function checkH3Position(blocks) {
   const h3Headers = blocks.filter(block => {
+    if (!block.mods) {
+      return false;
+    }
+
     return block.block === 'text' && !block.elem && block.mods.type === 'h3';
   });
   const h2Headers = blocks.filter(block => {
+    if (!block.mods) {
+      return false;
+    }
+
     return block.block === 'text' && !block.elem && block.mods.type === 'h2';
   });
 

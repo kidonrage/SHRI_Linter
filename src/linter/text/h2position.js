@@ -3,9 +3,15 @@ import textErrors from '../errors/text';
 
 function checkH2Position(blocks) {
   const h2Headers = blocks.filter((block) => {
+    if (!block.mods) {
+      return false;
+    }
     return block.block === 'text' && !block.elem && block.mods.type === 'h2';
   });
   const h1Header = blocks.find((block) => {
+    if (!block.mods) {
+      return false;
+    }
     return block.block === 'text' && !block.elem && block.mods.type === 'h1';
   });
 

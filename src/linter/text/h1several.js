@@ -3,6 +3,9 @@ import textErrors from '../errors/text';
 
 function checkH1Severalty(blocks) {
   const h1Headers = blocks.filter((block) => {
+    if (!block.mods) {
+      return false;
+    }
     return block.block === 'text' && !block.elem && block.mods.type === 'h1';
   });
 
