@@ -1,71 +1,63 @@
-function getMixedASTBlocksOf(node) {
-  if (node.type === 'Array') {
-    return [];
+const findPropertyIn = (astObject, propertyName) => {
+  return astObject.children.find((child) => {
+    return child.key && child.key.value === propertyName
+  });
+}
+
+const isBlock = (node) => {
+  const contentProperty = findPropertyIn(node, 'content');
+
+  if (contentProperty) {
+    return true;
   }
 
-  const mixProperty = node.children.find((child) => {
-    return child.key.value === 'mix'
-  });
+  const blockProperty = findPropertyIn(node, 'block');
+  const elemProperty = findPropertyIn(node, 'elem');
 
-  if (!mixProperty || mixProperty.value === 0) {
+  return blockProperty && !elemProperty
+}
+
+function getMixedASTBlocksOf(node) {
+  const mixProperty = findPropertyIn(node, 'mix')
+
+  if (!mixProperty) {
     return [];
   }
 
   const mixValue = mixProperty.value
 
-  let mixedBlocks = [];
-  if (mixValue.type === 'Array') {
-    mixedBlocks = mixValue.children.filter(mixin => {
-      const blockProperty = mixin.children.find((child) => {
-        return child.key.value === 'block'
-      })
-      const elemProperty = mixin.children.find((child) => {
-        return child.key.value === 'elem'
-      })
-      return blockProperty && !elemProperty
-    });
-  } else {
-    const blockProperty = mixin.children.find((child) => {
-      return child.key.value === 'block'
-    })
-    const elemProperty = mixin.children.find((child) => {
-      return child.key.value === 'elem'
-    })
+  let mixedNodes = mixValue.type === 'Array' ? mixValue.children : [].concat(mixValue);
+  
+  mixedBlocks = mixedNodes.filter(mixin => {
+    return isBlock(mixin);
+  });
 
-    if (blockProperty && !elemProperty) {
-      mixedBlock.push(mixValue);
+  return mixedBlocks;
+}
+
+export function getChildASTBlocksIn(node) {
+  let childNodes = [];
+
+  console.log('node', node);
+
+  if (node.type === 'Array') {
+    childNodes = [].concat(node.children);
+  } else {
+    const contentProperty = findPropertyIn(node, 'content');
+    console.log('contentProperty', contentProperty);
+    if (contentProperty) {
+      const contentValue = contentProperty.value.type === 'Array' ? contentProperty.value.children : contentProperty.value;
+      childNodes = [].concat(contentValue);
     }
   }
 
-  return [].concat(mixedBlocks);
-}
+  console.log('childNodes', childNodes);
 
-export function getASTChildrenOf(node) {
-  if (!node.children) {
-    return [];
-  }
+  const childBlocks = childNodes.filter(node => {
+    return isBlock(node);
+  });
 
-  if (node.type === 'Array') {
-    return node.children;
-  }
-
-  const contentProperty = node.children.find((child) => {
-    return child.key.value === 'content'
-  })
-
-  // Нет контента
-  if (!contentProperty) {
-    return []
-  }
-
-  const contentValue = contentProperty.value;
-
-  if (contentValue.type === "Array") {
-    return contentValue.children;
-  }
-
-  // Контент - объект
-  return [contentProperty.value]
+  return childBlocks
 }
 
 export function convertAstTreeToList(root) {
@@ -82,24 +74,12 @@ export function convertAstTreeToList(root) {
   while(stack.length !== 0) {
       let node = stack.shift();
 
-      // В контенте можно встретить массивы объектов на одном уровне с объектами;
-      // if (node.type === 'Array') {
-      //   stack.unshift(...node.children);
-      //   continue;
-      // }
-
       array.push(node);
 
       const nodeMixins = getMixedASTBlocksOf(node);
       array.push(...nodeMixins);
       
-      const nodeChildren = getASTChildrenOf(node);
-      // console.log('node', node);
-      // node.children.forEach(child => {
-      //   console.log('child', child)
-      // });
-      // console.log('\n');
-      // console.log('nodeChildren', nodeChildren)
+      const nodeChildren = getChildASTBlocksIn(node);
 
       if (nodeChildren.length === 0) {
         continue;

@@ -2983,16 +2983,12 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _text = _interopRequireDefault(require("../errors/text"));
 
+var _blocksService = require("../../services/blocksService");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkH1Severalty(blocks) {
-  const h1Headers = blocks.filter(block => {
-    if (!block.mods) {
-      return false;
-    }
-
-    return block.block === 'text' && !block.elem && block.mods.type === 'h1';
-  });
+  const h1Headers = (0, _blocksService.findAllBlocksWithMod)(blocks, 'text', 'type', 'h1');
 
   if (h1Headers.length < 1) {
     return [];
@@ -3014,7 +3010,7 @@ function checkH1Severalty(blocks) {
 var _default = checkH1Severalty;
 exports.default = _default;
 
-},{"../errors/linterError":4,"../errors/text":5}],10:[function(require,module,exports){
+},{"../../services/blocksService":19,"../errors/linterError":4,"../errors/text":5}],10:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3026,23 +3022,13 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _text = _interopRequireDefault(require("../errors/text"));
 
+var _blocksService = require("../../services/blocksService");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkH2Position(blocks) {
-  const h2Headers = blocks.filter(block => {
-    if (!block.mods) {
-      return false;
-    }
-
-    return block.block === 'text' && !block.elem && block.mods.type === 'h2';
-  });
-  const h1Header = blocks.find(block => {
-    if (!block.mods) {
-      return false;
-    }
-
-    return block.block === 'text' && !block.elem && block.mods.type === 'h1';
-  });
+  const h2Headers = (0, _blocksService.findAllBlocksWithMod)(blocks, 'text', 'type', 'h2');
+  const h1Header = (0, _blocksService.findBlockWithMod)(blocks, 'text', 'type', 'h1');
 
   if (h2Headers.length === 0 || !h1Header) {
     return [];
@@ -3069,7 +3055,7 @@ function checkH2Position(blocks) {
 var _default = checkH2Position;
 exports.default = _default;
 
-},{"../errors/linterError":4,"../errors/text":5}],11:[function(require,module,exports){
+},{"../../services/blocksService":19,"../errors/linterError":4,"../errors/text":5}],11:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3081,23 +3067,13 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _text = _interopRequireDefault(require("../errors/text"));
 
+var _blocksService = require("../../services/blocksService");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkH3Position(blocks) {
-  const h3Headers = blocks.filter(block => {
-    if (!block.mods) {
-      return false;
-    }
-
-    return block.block === 'text' && !block.elem && block.mods.type === 'h3';
-  });
-  const h2Headers = blocks.filter(block => {
-    if (!block.mods) {
-      return false;
-    }
-
-    return block.block === 'text' && !block.elem && block.mods.type === 'h2';
-  });
+  const h3Headers = (0, _blocksService.findAllBlocksWithMod)(blocks, 'text', 'type', 'h3');
+  const h2Headers = (0, _blocksService.findAllBlocksWithMod)(blocks, 'text', 'type', 'h2');
 
   if (h3Headers.length === 0 || h2Headers.length === 0) {
     return [];
@@ -3131,7 +3107,7 @@ function checkH3Position(blocks) {
 var _default = checkH3Position;
 exports.default = _default;
 
-},{"../errors/linterError":4,"../errors/text":5}],12:[function(require,module,exports){
+},{"../../services/blocksService":19,"../errors/linterError":4,"../errors/text":5}],12:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3420,76 +3396,63 @@ exports.default = _default;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getASTChildrenOf = getASTChildrenOf;
+exports.getChildASTBlocksIn = getChildASTBlocksIn;
 exports.convertAstTreeToList = convertAstTreeToList;
 
-function getMixedASTBlocksOf(node) {
-  if (node.type === 'Array') {
-    return [];
+const findPropertyIn = (astObject, propertyName) => {
+  return astObject.children.find(child => {
+    return child.key && child.key.value === propertyName;
+  });
+};
+
+const isBlock = node => {
+  const contentProperty = findPropertyIn(node, 'content');
+
+  if (contentProperty) {
+    return true;
   }
 
-  const mixProperty = node.children.find(child => {
-    return child.key.value === 'mix';
-  });
+  const blockProperty = findPropertyIn(node, 'block');
+  const elemProperty = findPropertyIn(node, 'elem');
+  return blockProperty && !elemProperty;
+};
 
-  if (!mixProperty || mixProperty.value === 0) {
+function getMixedASTBlocksOf(node) {
+  const mixProperty = findPropertyIn(node, 'mix');
+
+  if (!mixProperty) {
     return [];
   }
 
   const mixValue = mixProperty.value;
-  let mixedBlocks = [];
+  let mixedNodes = mixValue.type === 'Array' ? mixValue.children : [].concat(mixValue);
+  mixedBlocks = mixedNodes.filter(mixin => {
+    return isBlock(mixin);
+  });
+  return mixedBlocks;
+}
 
-  if (mixValue.type === 'Array') {
-    mixedBlocks = mixValue.children.filter(mixin => {
-      const blockProperty = mixin.children.find(child => {
-        return child.key.value === 'block';
-      });
-      const elemProperty = mixin.children.find(child => {
-        return child.key.value === 'elem';
-      });
-      return blockProperty && !elemProperty;
-    });
+function getChildASTBlocksIn(node) {
+  let childNodes = [];
+  console.log('node', node);
+
+  if (node.type === 'Array') {
+    childNodes = [].concat(node.children);
   } else {
-    const blockProperty = mixin.children.find(child => {
-      return child.key.value === 'block';
-    });
-    const elemProperty = mixin.children.find(child => {
-      return child.key.value === 'elem';
-    });
+    const contentProperty = findPropertyIn(node, 'content');
+    console.log('contentProperty', contentProperty);
 
-    if (blockProperty && !elemProperty) {
-      mixedBlock.push(mixValue);
+    if (contentProperty) {
+      const contentValue = contentProperty.value.type === 'Array' ? contentProperty.value.children : contentProperty.value;
+      childNodes = [].concat(contentValue);
     }
   }
 
-  return [].concat(mixedBlocks);
-}
-
-function getASTChildrenOf(node) {
-  if (!node.children) {
-    return [];
-  }
-
-  if (node.type === 'Array') {
-    return node.children;
-  }
-
-  const contentProperty = node.children.find(child => {
-    return child.key.value === 'content';
-  }); // Нет контента
-
-  if (!contentProperty) {
-    return [];
-  }
-
-  const contentValue = contentProperty.value;
-
-  if (contentValue.type === "Array") {
-    return contentValue.children;
-  } // Контент - объект
-
-
-  return [contentProperty.value];
+  console.log('childNodes', childNodes);
+  const childBlocks = childNodes.filter(node => {
+    return isBlock(node);
+  });
+  return childBlocks;
 }
 
 function convertAstTreeToList(root) {
@@ -3505,21 +3468,11 @@ function convertAstTreeToList(root) {
   }
 
   while (stack.length !== 0) {
-    let node = stack.shift(); // В контенте можно встретить массивы объектов на одном уровне с объектами;
-    // if (node.type === 'Array') {
-    //   stack.unshift(...node.children);
-    //   continue;
-    // }
-
+    let node = stack.shift();
     array.push(node);
     const nodeMixins = getMixedASTBlocksOf(node);
     array.push(...nodeMixins);
-    const nodeChildren = getASTChildrenOf(node); // console.log('node', node);
-    // node.children.forEach(child => {
-    //   console.log('child', child)
-    // });
-    // console.log('\n');
-    // console.log('nodeChildren', nodeChildren)
+    const nodeChildren = getChildASTBlocksIn(node);
 
     if (nodeChildren.length === 0) {
       continue;
@@ -3540,6 +3493,10 @@ Object.defineProperty(exports, "__esModule", {
 exports.convertTreeToList = convertTreeToList;
 exports.getBlocks = getBlocks;
 exports.findBlocksIn = findBlocksIn;
+exports.findBlock = findBlock;
+exports.findBlockWithMod = findBlockWithMod;
+exports.findAllBlocks = findAllBlocks;
+exports.findAllBlocksWithMod = findAllBlocksWithMod;
 
 var _jsonToAst = _interopRequireDefault(require("json-to-ast"));
 
@@ -3547,42 +3504,34 @@ var _astService = require("./astService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function getMixedBlocksOf(node) {
-  if (Array.isArray(node)) {
-    return [];
-  }
+const isBlock = node => {
+  return node.content || node.block && !node.elem;
+};
 
+function getMixedBlocksOf(node) {
   const mixValue = node.mix;
 
-  if (!mixValue || mixValue.length === 0) {
+  if (!mixValue) {
     return [];
   }
 
-  let mixedBlocks = [];
-
-  if (Array.isArray(mixValue)) {
-    mixedBlocks = mixValue.filter(mixin => mixin.block && !mixin.elem);
-  } else if (mixValue.block && !mixValue.elem) {
-    mixedBlocks.push(mixValue);
-  }
-
-  return [].concat(mixedBlocks);
+  let mixedNodes = [].concat(mixValue);
+  const mixedBlocks = mixedNodes.filter(mixin => isBlock(mixin));
+  return mixedBlocks;
 }
 
-function getChildrenOf(node) {
-  // Получаем контент массива
-  if (Array.isArray(node)) {
-    return node;
+function getChildBlocksIn(node) {
+  console.log('nodeee', node);
+  let nodeChildren = node;
+
+  if (!Array.isArray(node)) {
+    // Ищем контент объекта и забираем если есть
+    nodeChildren = node.content || [];
   }
 
-  const content = node.content;
-
-  if (!content) {
-    return [];
-  } // Контент - объект
-
-
-  return [].concat(content);
+  const blocks = nodeChildren.filter(child => isBlock(child));
+  console.log('child nodeeees', blocks);
+  return [].concat(blocks);
 }
 
 function convertTreeToList(root) {
@@ -3600,13 +3549,7 @@ function convertTreeToList(root) {
   let isPreviousDeeper = false;
 
   while (stack.length !== 0) {
-    let node = stack.shift(); // В контенте можно встретить массивы объектов на одном уровне с объектами;
-    // if (Array.isArray(node)) {
-    //   depth++;
-    //   stack.unshift(...node);
-    //   continue;
-    // }
-
+    let node = stack.shift();
     node.depth = depth;
     array.push(node);
     const nodeMixins = getMixedBlocksOf(node).map(mixedBlock => {
@@ -3615,7 +3558,7 @@ function convertTreeToList(root) {
       };
     });
     array.push(...nodeMixins);
-    const nodeChildren = getChildrenOf(node);
+    const nodeChildren = getChildBlocksIn(node);
 
     if (nodeChildren.length === 0) {
       if (isPreviousDeeper) {
@@ -3634,18 +3577,6 @@ function convertTreeToList(root) {
   return array;
 }
 
-function isBlock(node) {
-  const childrenKeys = node.children.map(child => {
-    return child.key.value;
-  });
-
-  if (childrenKeys.includes('block')) {
-    return true;
-  }
-
-  return false;
-}
-
 function applyLocationsToBlock(block, astBlockRepresentation) {
   const {
     start,
@@ -3657,8 +3588,8 @@ function applyLocationsToBlock(block, astBlockRepresentation) {
       end
     }
   };
-  const blockChildren = getChildrenOf(block);
-  const astChildren = (0, _astService.getASTChildrenOf)(astBlockRepresentation);
+  const blockChildren = getChildBlocksIn(block);
+  const astChildren = (0, _astService.getChildASTBlocksIn)(astBlockRepresentation);
   const childrenWithLocation = blockChildren.map((child, index) => {
     const astChild = astChildren[index];
     return applyLocationsToBlock(child, astChild);
@@ -3680,34 +3611,8 @@ function applyLocationsToBlock(block, astBlockRepresentation) {
 function getBlocksWithLocation(blocks, astBlocks) {
   const blockWithLocation = blocks.map((block, index) => {
     let result = block;
-    const astBlock = astBlocks[index]; // console.log('result', result);
-    // console.log('astBlock', astBlock);
-
-    return applyLocationsToBlock(result, astBlock); // if (result.content) {
-    //   let content = [].concat(result.content);
-    //   let astChildren = getASTChildrenOf(astBlock);
-    //   // console.log('content', content);
-    //   // console.log('astChildren', astChildren);
-    //   const contentWithLoc = content.map((contentBlock, index) => {
-    //     const {start, end} = astChildren[index].loc;
-    //     return {
-    //       ...contentBlock, 
-    //       location: {
-    //         start,
-    //         end
-    //       }
-    //     }
-    //   })
-    //   result.content = contentWithLoc;
-    // }
-    // const {start, end} = astBlock.loc;
-    // return {
-    //   ...result, 
-    //   location: {
-    //     start,
-    //     end
-    //   }
-    // }
+    const astBlock = astBlocks[index];
+    return applyLocationsToBlock(result, astBlock);
   });
   return blockWithLocation;
 }
@@ -3722,7 +3627,7 @@ function getBlocks(jsonString) {
   try {
     json = JSON.parse(jsonString);
   } catch (e) {
-    console.log('Invalid JSON');
+    console.error('Invalid JSON');
     return [];
   }
 
@@ -3738,6 +3643,38 @@ function getBlocks(jsonString) {
 function findBlocksIn(blocks, blockName) {
   return blocks.filter(block => {
     return block.block === blockName;
+  });
+}
+
+function findBlock(list, blockName) {
+  return list.find(block => {
+    return block.block === blockName && !block.elem;
+  });
+}
+
+function findBlockWithMod(list, blockName, modName, modValue) {
+  return list.find(block => {
+    if (!block.mods) {
+      return false;
+    }
+
+    return block.block === blockName && !block.elem && block.mods[modName] === modValue;
+  });
+}
+
+function findAllBlocks(list, blockName) {
+  return list.filter(block => {
+    return block.block === blockName && !block.elem;
+  });
+}
+
+function findAllBlocksWithMod(list, blockName, modName, modValue) {
+  return list.filter(block => {
+    if (!block.mods) {
+      return false;
+    }
+
+    return block.block === blockName && !block.elem && block.mods[modName] === modValue;
   });
 }
 

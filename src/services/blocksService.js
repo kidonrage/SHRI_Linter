@@ -1,41 +1,38 @@
 import parse from 'json-to-ast';
-import {convertAstTreeToList, getASTChildrenOf} from './astService';
+import {convertAstTreeToList, getChildASTBlocksIn} from './astService';
 
-function getMixedBlocksOf(node) {
-  if (Array.isArray(node)) {
-    return [];
-  }
-
-  const mixValue = node.mix;
-
-  if (!mixValue || mixValue.length === 0) {
-    return [];
-  }
-
-  let mixedBlocks = [];
-  if (Array.isArray(mixValue)) {
-    mixedBlocks = mixValue.filter(mixin => mixin.block && !mixin.elem);
-  } else if (mixValue.block && !mixValue.elem) {
-    mixedBlocks.push(mixValue);
-  }
-
-  return [].concat(mixedBlocks);
+const isBlock = (node) => {
+  return node.content || (node.block && !node.elem);
 }
 
-function getChildrenOf(node) {
-  // Получаем контент массива
-  if (Array.isArray(node)) {
-    return node;
-  }
+function getMixedBlocksOf(node) {
+  const mixValue = node.mix;
 
-  const content = node.content;
-
-  if (!content) {
+  if (!mixValue) {
     return [];
   }
 
-  // Контент - объект
-  return [].concat(content);
+  let mixedNodes = [].concat(mixValue);
+
+  const mixedBlocks = mixedNodes.filter(mixin => isBlock(mixin));
+
+  return mixedBlocks;
+}
+
+function getChildBlocksIn(node) {
+  console.log('nodeee', node)
+  let nodeChildren = node;
+
+  if (!Array.isArray(node)) {
+    // Ищем контент объекта и забираем если есть
+    nodeChildren = node.content || [];
+  }
+
+  const blocks = nodeChildren.filter(child => isBlock(child))
+
+  console.log('child nodeeees', blocks)
+  
+  return [].concat(blocks);
 }
 
 export function convertTreeToList(root) {
@@ -66,7 +63,7 @@ export function convertTreeToList(root) {
       });
       array.push(...nodeMixins);
 
-      const nodeChildren = getChildrenOf(node)
+      const nodeChildren = getChildBlocksIn(node)
 
       if(nodeChildren.length === 0) {
         if (isPreviousDeeper) {
@@ -86,18 +83,6 @@ export function convertTreeToList(root) {
   return array;
 }
 
-function isBlock(node) {
-  const childrenKeys = node.children.map((child) => {
-    return child.key.value;
-  })
-
-  if (childrenKeys.includes('block')) {
-    return true;
-  }
-
-  return false;
-}
-
 function applyLocationsToBlock(block, astBlockRepresentation) {
   const {start, end} = astBlockRepresentation.loc;
   const result = {
@@ -108,8 +93,8 @@ function applyLocationsToBlock(block, astBlockRepresentation) {
     }
   }
 
-  const blockChildren = getChildrenOf(block);
-  const astChildren = getASTChildrenOf(astBlockRepresentation);
+  const blockChildren = getChildBlocksIn(block);
+  const astChildren = getChildASTBlocksIn(astBlockRepresentation);
 
   const childrenWithLocation = blockChildren.map((child, index) => {
     const astChild = astChildren[index];
