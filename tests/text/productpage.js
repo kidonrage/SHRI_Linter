@@ -40,6 +40,12 @@ export default `{
           }
       },
       {
+        "block": "text",
+        "mods": {
+          "type": "h1"
+        }
+      },
+      {
           "block": "layout",
           "content": [
               {
@@ -55,6 +61,12 @@ export default `{
                           "mods": {
                               "indent-b": "xxxxl"
                           }
+                      },
+                      {
+                        "block": "text",
+                        "mods": {
+                          "type": "h1"
+                        }
                       }
                   ],
                   "content": [
