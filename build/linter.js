@@ -3036,14 +3036,10 @@ class Linter {
       placeholderSize
     } = _warning.default;
     const warningBlocks = (0, _graphService.findRootBlocks)(graph, 'warning');
-    console.log('warningBlocks', warningBlocks);
     const errors = warningBlocks.map(block => {
       const blockErrors = [...textDifference(block), ...buttonSize(block), ...buttonPosition(block), ...placeholderSize(block)];
-      console.log('blockErrors', blockErrors);
       return blockErrors;
     });
-    console.log('errorsassd', errors);
-    console.log('[].concat(errors)', [].concat(...errors));
     return [].concat(...errors);
   }
 
@@ -3244,14 +3240,16 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _warning = _interopRequireDefault(require("../errors/warning"));
 
+var _graphService = require("../../services/graphService");
+
 var _blocksService = require("../../services/blocksService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkButtonPosition(warningBlock) {
   const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
-  const buttons = (0, _blocksService.findAllBlocks)(nodes, 'button');
-  const placeholders = (0, _blocksService.findAllBlocks)(nodes, 'placeholder');
+  const buttons = (0, _graphService.findRootBlocks)(warningBlock, 'button');
+  const placeholders = (0, _graphService.findRootBlocks)(warningBlock, 'placeholder');
 
   if (buttons.length === 0 || placeholders.length === 0) {
     return [];
@@ -3285,7 +3283,7 @@ function checkButtonPosition(warningBlock) {
 var _default = checkButtonPosition;
 exports.default = _default;
 
-},{"../../services/blocksService":23,"../errors/linterError":6,"../errors/warning":8}],18:[function(require,module,exports){
+},{"../../services/blocksService":23,"../../services/graphService":24,"../errors/linterError":6,"../errors/warning":8}],18:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3297,7 +3295,7 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _warning = _interopRequireDefault(require("../errors/warning"));
 
-var _blocksService = require("../../services/blocksService");
+var _graphService = require("../../services/graphService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -3329,9 +3327,8 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
 };
 
 function checkButtonSize(warningBlock) {
-  const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
-  const buttons = (0, _blocksService.findAllBlocks)(nodes, 'button');
-  const firstTextBlock = (0, _blocksService.findBlock)(nodes, 'text');
+  const buttons = (0, _graphService.findRootBlocks)(warningBlock, 'button');
+  const firstTextBlock = (0, _graphService.findRootBlocks)(warningBlock, 'text')[0];
 
   if (buttons.length < 1 || !firstTextBlock) {
     return [];
@@ -3357,7 +3354,7 @@ function checkButtonSize(warningBlock) {
 var _default = checkButtonSize;
 exports.default = _default;
 
-},{"../../services/blocksService":23,"../errors/linterError":6,"../errors/warning":8}],19:[function(require,module,exports){
+},{"../../services/graphService":24,"../errors/linterError":6,"../errors/warning":8}],19:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3396,14 +3393,14 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _warning = _interopRequireDefault(require("../errors/warning"));
 
-var _blocksService = require("../../services/blocksService");
+var _graphService = require("../../services/graphService");
 
 var _sizes = require("../enums/sizes");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkPlaceholderSize(warningBlock) {
-  const placeholders = (0, _blocksService.findAllBlocks)(nodes, 'placeholder');
+  const placeholders = (0, _graphService.findRootBlocks)(warningBlock, 'placeholder');
 
   if (placeholders.length === 0) {
     return [];
@@ -3428,7 +3425,7 @@ function checkPlaceholderSize(warningBlock) {
 var _default = checkPlaceholderSize;
 exports.default = _default;
 
-},{"../../services/blocksService":23,"../enums/sizes":4,"../errors/linterError":6,"../errors/warning":8}],21:[function(require,module,exports){
+},{"../../services/graphService":24,"../enums/sizes":4,"../errors/linterError":6,"../errors/warning":8}],21:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
