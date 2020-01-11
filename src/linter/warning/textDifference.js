@@ -1,11 +1,9 @@
 import LinterError from '../errors/linterError';
 import warningErrors from '../errors/warning';
-import {convertTreeToList, findAllBlocks} from '../../services/blocksService';
+import {findRootBlocks} from '../../services/graphService';
 
 function checkTextDifference(warningBlock) {
-  const nodes = convertTreeToList(warningBlock);
-
-  const textBlocks = findAllBlocks(nodes, 'text');
+  const textBlocks = findRootBlocks(warningBlock, 'text');
   
   // Если в блоке нет текста
   if (textBlocks.length === 0) {

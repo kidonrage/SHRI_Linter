@@ -1,9 +1,9 @@
 import LinterError from '../errors/linterError';
 import textErrors from '../errors/text';
-import {findAllBlocksWithMod} from '../../services/blocksService';
+import {findRootBlocksWithMod} from '../../services/graphService';
 
 function checkH1Severalty(blocks) {
-  const h1Headers = findAllBlocksWithMod(blocks, 'text', 'type', 'h1');
+  const h1Headers = findRootBlocksWithMod(blocks, 'text', 'type', 'h1');
 
   if (h1Headers.length < 1) {
     return []

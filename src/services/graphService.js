@@ -83,5 +83,21 @@ export function findRootBlocks(rootNode, blockName) {
 
   const contentArr = [].concat(nodeContent);
 
-  return contentArr.map(childNode => findRootBlocks(childNode, blockName));
+  const rootBlocks = contentArr.map(childNode => findRootBlocks(childNode, blockName));
+
+  return [].concat(...rootBlocks).filter(block => block)
+}
+
+export function findRootBlocksWithMod(rootNode, blockName, modName) {
+  const rootBlocks = findRootBlocks(rootNode, blockName);
+  
+  const rootBlocksWithMod = rootBlocks.filter(block => {
+    if (!block.mods) {
+      return false
+    }
+
+    return block.mods[modName] === modValue;
+  })
+
+  return rootBlocksWithMod;
 }
