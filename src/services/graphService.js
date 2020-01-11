@@ -1,7 +1,6 @@
 import {getASTRoots, getASTContent, parseASTLocation} from './astService';
 
 export function getRoots(json) {
-  console.log('json', json)
   if (json.length === 0) {
     return [];  
   }
@@ -13,6 +12,13 @@ export function getRoots(json) {
   } catch(error) {
     console.error('Invalid JSON: ', error);
   }
+
+  // Если в входящей строке в массиве находились другие массивы
+  roots.forEach((root, index) => {
+    while (Array.isArray(roots[index])) {
+      roots = roots.flat();
+    }
+  })
 
   console.log('roots', roots)
 
@@ -28,12 +34,13 @@ export function getGraphs(json) {
 
   const ASTRoots = getASTRoots(json);
 
+  console.log(roots.length, ASTRoots.length);
+
   const graphs = roots.map((rootObj, index) => {
     const rootASTObj = ASTRoots[index];
 
     const rootObjWithLoc = applyServiceData(rootObj, rootASTObj);
 
-    console.log(JSON.stringify(rootObjWithLoc));
     return rootObjWithLoc
   });
   
@@ -112,8 +119,6 @@ export function findPositionInvalidBlocks(rootNode, beforeBlockRecognizer, after
   const beforeBlocks = recognizedBlocks.filter(block => beforeBlockRecognizer(block));
   const afterBlocks = recognizedBlocks.filter(block => afterBlockRecognizer(block));
 
-  console.log('recognizedBlocks', recognizedBlocks);
-
   if (afterBlocks.length > 0) {
     let invalidBlocks = [];
     afterBlocks.forEach(afterBlock => {
@@ -121,12 +126,8 @@ export function findPositionInvalidBlocks(rootNode, beforeBlockRecognizer, after
         return recognizedBlocks.indexOf(beforeBlock) < recognizedBlocks.indexOf(afterBlock) && beforeBlock.depth <= afterBlock.depth
       })
 
-      console.log('temp', temp);
-
       invalidBlocks = [...invalidBlocks, ...temp];
     })
-
-    console.log('invalidBlocks', invalidBlocks);
 
     return invalidBlocks;
   }
