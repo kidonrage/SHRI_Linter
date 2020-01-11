@@ -75,7 +75,7 @@ const testInputs = [
           "mods": { "type": "h1" }
       }
     ]`,
-    expectedErrors: 2
+    expectedErrors: 0
   },
   {
     json: `[
@@ -129,7 +129,7 @@ const testInputs = [
         ]
       }
     ]`,
-    expectedErrors: 2
+    expectedErrors: 1
   },
   {
     json: indexJSON,
@@ -137,7 +137,7 @@ const testInputs = [
   },
   {
     json: productJSON,
-    expectedErrors: 2
+    expectedErrors: 1
   }
 ]
 
