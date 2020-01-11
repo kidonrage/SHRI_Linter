@@ -3259,7 +3259,7 @@ function checkButtonPosition(warningBlock) {
     buttons.forEach(button => {
       const buttonIndex = nodes.indexOf(button);
 
-      if (buttonIndex < placeholderIndex && button.depth <= placeholder.depth) {
+      if (buttonIndex < placeholderIndex && button.depth >= placeholder.depth) {
         isInvalid = true;
       }
     });
