@@ -1,6 +1,6 @@
 import LinterError from '../errors/linterError';
 import warningErrors from '../errors/warning';
-import {convertTreeToList, findAllBlocks, findBlock} from '../../services/blocksService';
+import {findRootBlocks} from '../../services/graphService';
 
 const isButtonSizeValid = (buttonSize, referenceSize) => {
   let properButtonSize = '';
@@ -26,10 +26,8 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
 }
 
 function checkButtonSize(warningBlock) {
-  const nodes = convertTreeToList(warningBlock);
-
-  const buttons = findAllBlocks(nodes, 'button');
-  const firstTextBlock = findBlock(nodes, 'text');
+  const buttons = findRootBlocks(warningBlock, 'button');
+  const firstTextBlock = findRootBlocks(warningBlock, 'text')[0];
 
   if (buttons.length < 1 || !firstTextBlock) {
     return []

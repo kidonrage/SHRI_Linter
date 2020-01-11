@@ -44,8 +44,6 @@ export default class Linter {
 
     const warningBlocks = findRootBlocks(graph, 'warning');
 
-    console.log('warningBlocks', warningBlocks);
-
     const errors = warningBlocks.map((block) => {
       const blockErrors = [
         ...textDifference(block),
@@ -53,14 +51,9 @@ export default class Linter {
         ...buttonPosition(block),
         ...placeholderSize(block)
       ]
-      
-      console.log('blockErrors', blockErrors)
+
       return blockErrors;
     });
-
-    console.log('errorsassd', errors)
-
-    console.log('[].concat(errors)', [].concat(...errors))
 
     return [].concat(...errors);
   }
