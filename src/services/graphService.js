@@ -27,7 +27,7 @@ export function getGraphs(json) {
   const graphs = roots.map((rootObj, index) => {
     const rootASTObj = ASTRoots[index];
 
-    const rootObjWithLoc = applyLocation(rootObj, rootASTObj);
+    const rootObjWithLoc = applyServiceData(rootObj, rootASTObj);
 
     console.log(JSON.stringify(rootObjWithLoc));
     return rootObjWithLoc
@@ -36,10 +36,11 @@ export function getGraphs(json) {
   return graphs;
 }
 
-function applyLocation(block, ASTBlock) {
+// Инъекцирует данные о локации и глубине вложенности
+function applyServiceData(block, ASTBlock, depth = 0) {
   if (Array.isArray(block) && ASTBlock.type === 'Array') {
     return block.map((childBlock, index) => {
-      return applyLocation(childBlock, ASTBlock.children[index])
+      return applyServiceData(childBlock, ASTBlock.children[index], depth + 1)
     })
   }
 
@@ -48,23 +49,24 @@ function applyLocation(block, ASTBlock) {
   if (!blockContent) {
     return {
       ...block,
+      depth,
       location: parseASTLocation(ASTBlock)
     }
   }
 
   const ASTBlockContent = getASTContent(ASTBlock);
 
-  const contentWithLocation = applyLocation(blockContent, ASTBlockContent);
+  const contentWithLocation = applyServiceData(blockContent, ASTBlockContent, depth + 1);
 
   let result = {
     ...block,
+    depth,
     content: contentWithLocation,
     location: parseASTLocation(ASTBlock)
   };
 
   return result;
 }
-
 
 export function findRootBlocks(rootNode, blockName) {
   const nodeName = rootNode.block;
