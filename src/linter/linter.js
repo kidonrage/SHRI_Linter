@@ -28,8 +28,6 @@ export default class Linter {
         return this[blockName](rootGraph)
       })
 
-      console.log('graphErrors', graphErrors)
-
       return [].concat(...graphErrors)
     })
 
