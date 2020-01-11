@@ -3019,7 +3019,6 @@ class Linter {
       const graphErrors = this.blocksToCheck.map(blockName => {
         return this[blockName](rootGraph);
       });
-
       return [].concat(...graphErrors);
     }); // 2d blocks errors array to 1d
 
@@ -3035,14 +3034,10 @@ class Linter {
       placeholderSize
     } = _warning.default;
     const warningBlocks = (0, _graphService.findRootBlocks)(graph, 'warning');
-
     const errors = warningBlocks.map(block => {
       const blockErrors = [...textDifference(block), ...buttonSize(block), ...buttonPosition(block), ...placeholderSize(block)];
-
       return blockErrors;
     });
-    console.log('errorsassd', errors);
-    console.log('[].concat(errors)', [].concat(...errors));
     return [].concat(...errors);
   }
 
@@ -3088,9 +3083,7 @@ var _graphService = require("../../services/graphService");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkH1Severalty(blocks) {
-
   const h1Headers = (0, _graphService.findRootBlocksWithMod)(blocks, 'text', 'type', 'h1');
-
 
   if (h1Headers.length < 1) {
     return [];
