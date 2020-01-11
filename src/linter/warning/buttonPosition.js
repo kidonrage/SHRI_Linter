@@ -33,7 +33,7 @@ function checkButtonPosition(warningBlock) {
     const errors = invalidButtons.map((invalidButton) => {
       const error = new LinterError(
         warningErrors.buttonPosition,
-        invalidButton.location
+        invalidButton
       )
     
       return error;

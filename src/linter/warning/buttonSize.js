@@ -47,7 +47,7 @@ function checkButtonSize(warningBlock) {
     const errors = invalidButtons.map((button) => {
       const error = new LinterError(
         warningErrors.buttonSize,
-        button.location
+        button
       )
     
       return error;

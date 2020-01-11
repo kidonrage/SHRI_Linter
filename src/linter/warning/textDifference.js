@@ -28,7 +28,7 @@ function checkTextDifference(warningBlock) {
     const errors = invalidSizes.map((invalidSize) => {
       const error = new LinterError(
         warningErrors.textSize,
-        warningBlock.location
+        warningBlock
       );
     
       return error;

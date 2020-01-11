@@ -22,7 +22,7 @@ function checkPlaceholderSize(warningBlock) {
     const errors = invalidPlaceholders.map((invalidPlaceholder) => {
       const error = new LinterError(
         warningErrors.placeholderSize,
-        invalidPlaceholder.location
+        invalidPlaceholder
       )
     
       return error;

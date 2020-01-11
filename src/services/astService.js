@@ -1,3 +1,5 @@
+import parseToAST from 'json-to-ast';
+
 const findPropertyIn = (astObject, propertyName) => {
   return astObject.children.find((child) => {
     return child.key && child.key.value === propertyName
@@ -84,4 +86,41 @@ export function convertAstTreeToList(root) {
   }
 
   return array;
+}
+
+export function getASTContent(ASTObject) {
+  const contentProperty = findPropertyIn(ASTObject, 'content');
+
+  const ASTContent = contentProperty.value;
+
+  return ASTContent;
+}
+
+export function getASTRoots(json) {
+  let astRootObject = {}
+  try {
+    astRootObject = parseToAST(json);
+  } catch(error) {
+    console.error('Invalid JSON: ', error);
+  }
+  
+  let roots = astRootObject.type === 'Array' ? astRootObject.children : [].concat(astRootObject)
+
+  return roots;
+}
+
+export const parseASTLocation = (ASTBlock) => {
+  const {line: startLine, column: startColumn} = ASTBlock.loc.start;
+  const {line: endLine, column: endColumn} = ASTBlock.loc.end;
+
+  return {
+    start: {
+      line: startLine,
+      column: startColumn
+    },
+    end: {
+      line: endLine,
+      column: endColumn
+    }
+  }
 }
