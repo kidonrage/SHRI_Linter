@@ -5,8 +5,30 @@ import productJSON from './productpage';
 
 const testInputs = [
   {
-    json: `[]`,
-    expectedErrors: 0
+    json: `[
+      [
+        [
+        {
+          "block": "page",
+          "content": [
+            {
+              "block": "text",
+              "mods": {
+                "type": "h1"
+              }
+            },
+            {
+              "block": "text",
+              "mods": {
+                "type": "h1"
+              }
+            }
+          ]
+        }
+        ]
+      ]
+    ]`,
+    expectedErrors: 1
   },
   {
     json: `[
