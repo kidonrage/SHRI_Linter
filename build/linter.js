@@ -3333,6 +3333,10 @@ function checkButtonSize(warningBlock) {
   });
   const referenceSize = textSizes[0];
   const invalidButtons = buttons.filter(button => {
+    if (!button.mods) {
+      return true;
+    }
+
     return !isButtonSizeValid(button.mods.size, referenceSize);
   });
   const isSizesValid = invalidButtons.length === 0;
