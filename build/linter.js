@@ -3315,13 +3315,16 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
 
 function checkButtonSize(warningBlock) {
   const buttons = (0, _graphService.findRootBlocks)(warningBlock, 'button');
-  const firstTextBlock = (0, _graphService.findRootBlocks)(warningBlock, 'text')[0];
+  const textBlocks = (0, _graphService.findRootBlocks)(warningBlock, 'text');
 
-  if (buttons.length < 1 || !firstTextBlock) {
+  if (textBlocks.length < 1 || buttons.length < 1) {
     return [];
   }
 
-  const referenceSize = firstTextBlock.mods.size;
+  const sortedTextBlocks = textBlocks.sort((a, b) => {
+    return a.mods.type - b.mods.type;
+  });
+  const referenceSize = sortedTextBlocks[0].mods.size;
   const invalidButtons = buttons.filter(button => {
     return !isButtonSizeValid(button.mods.size, referenceSize);
   });
@@ -3445,8 +3448,11 @@ function checkTextDifference(warningBlock) {
   const isSizesEqual = invalidSizes.length === 0;
 
   if (!isSizesEqual) {
-    const error = new _linterError.default(_warning.default.textSize, warningBlock);
-    return error;
+    const errors = invalidSizes.map(invalidSize => {
+      const error = new _linterError.default(_warning.default.textSize, warningBlock);
+      return error;
+    });
+    return errors;
   }
 
   return [];
@@ -3573,8 +3579,7 @@ function getASTRoots(json) {
     console.error('Invalid JSON: ', error);
   }
 
-  let roots = astRootObject.type === 'Array' ? astRootObject.children : [].concat(astRootObject);
-  console.log(roots); // Если в входящей строке в массиве находились другие массивы
+  let roots = astRootObject.type === 'Array' ? astRootObject.children : [].concat(astRootObject); // Если в входящей строке в массиве находились другие массивы
 
   roots.forEach((root, index) => {
     while (roots[index].type === 'Array') {

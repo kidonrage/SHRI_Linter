@@ -23,12 +23,16 @@ function checkTextDifference(warningBlock) {
   const isSizesEqual = invalidSizes.length === 0;
 
   if (!isSizesEqual) {
-    const error = new LinterError(
-      warningErrors.textSize,
-      warningBlock
-    );
+    const errors = invalidSizes.map((invalidSize) => {
+      const error = new LinterError(
+        warningErrors.textSize,
+        warningBlock
+      );
+    
+      return error;
+    });
   
-    return error;
+    return errors;
   }
 
   return [];

@@ -110,8 +110,6 @@ export function getASTRoots(json) {
   
   let roots = astRootObject.type === 'Array' ? astRootObject.children : [].concat(astRootObject)
 
-  console.log(roots)
-
   // Если в входящей строке в массиве находились другие массивы
   roots.forEach((root, index) => {
     while (roots[index].type === 'Array') {

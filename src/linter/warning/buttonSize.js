@@ -27,13 +27,16 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
 
 function checkButtonSize(warningBlock) {
   const buttons = findRootBlocks(warningBlock, 'button');
-  const firstTextBlock = findRootBlocks(warningBlock, 'text')[0];
+  const textBlocks = findRootBlocks(warningBlock, 'text');
 
-  if (buttons.length < 1 || !firstTextBlock) {
-    return []
+  if (textBlocks.length < 1 || buttons.length < 1) {
+    return [];
   }
 
-  const referenceSize = firstTextBlock.mods.size;
+  const sortedTextBlocks = textBlocks.sort((a, b) => {
+    return a.mods.type - b.mods.type;
+  });
+  const referenceSize = sortedTextBlocks[0].mods.size; 
 
   const invalidButtons = buttons.filter((button) => {
     return !(isButtonSizeValid(button.mods.size, referenceSize));
