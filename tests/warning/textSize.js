@@ -22,6 +22,13 @@ const testInputs = [
                 "mods": { "size": "l" }
             }
           ]
+        },
+        {
+          "elem": "content",
+          "content": {
+            "block": "text",
+            "mods": { "size": "m" }
+          }
         }
       ]
     }`,
