@@ -1,6 +1,6 @@
 import LinterError from '../errors/linterError';
 import warningErrors from '../errors/warning';
-import {findRootBlocks, findRootBlocksWithMod} from '../../services/graphService';
+import {findRootBlocks} from '../../services/graphService';
 
 const isButtonSizeValid = (buttonSize, referenceSize) => {
   let properButtonSize = '';
@@ -27,13 +27,25 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
 
 function checkButtonSize(warningBlock) {
   const buttons = findRootBlocks(warningBlock, 'button');
-  const textBlocks = findRootBlocksWithMod(warningBlock, 'text', 'size');
+  const textBlocks = findRootBlocks(warningBlock, 'text');
 
   if (textBlocks.length < 1 || buttons.length < 1) {
     return [];
   }
+  
+  const textBlocksWithSize = textBlocks.filter(block => {
+    if (!block.mods) {
+      return false
+    }
 
-  const referenceSize = textBlocks[0].mods.size; 
+    return block.mods.size;
+  })
+
+  const textSizes = textBlocksWithSize.map((block) => {
+    return block.mods.size;
+  })
+
+  const referenceSize = textSizes[0];
 
   const invalidButtons = buttons.filter((button) => {
     return !(isButtonSizeValid(button.mods.size, referenceSize));

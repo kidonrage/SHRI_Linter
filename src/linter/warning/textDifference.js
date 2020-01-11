@@ -1,29 +1,37 @@
 import LinterError from '../errors/linterError';
 import warningErrors from '../errors/warning';
-import {findRootBlocksWithMod} from '../../services/graphService';
+import {findRootBlocks} from '../../services/graphService';
 
 function checkTextDifference(warningBlock) {
-  const textBlocks = findRootBlocksWithMod(warningBlock, 'text', 'size');
+  const textBlocks = findRootBlocks(warningBlock, 'text');
+
+  const textBlocksWithSize = textBlocks.filter(block => {
+    if (!block.mods) {
+      return false
+    }
+
+    return block.mods.size;
+  })
   
   // Если в блоке нет текста
   if (textBlocks.length === 0) {
     return [];
   }
 
-  const textSizes = textBlocks.map((block) => {
+  const textSizes = textBlocksWithSize.map((block) => {
     return block.mods.size;
   })
 
   const referenceSize = textSizes[0];
 
-  const invalidSizes = textSizes.filter( size => {
-    return size != referenceSize
+  const invalidBlocks = textBlocks.filter(block => {
+    return !block.mods || block.mods.size !== referenceSize
   })
 
-  const isSizesEqual = invalidSizes.length === 0;
+  const isSizesEqual = invalidBlocks.length === 0;
 
   if (!isSizesEqual) {
-    const errors = invalidSizes.map((invalidSize) => {
+    const errors = invalidBlocks.map((invalidSize) => {
       const error = new LinterError(
         warningErrors.textSize,
         warningBlock

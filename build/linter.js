@@ -3315,13 +3315,23 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
 
 function checkButtonSize(warningBlock) {
   const buttons = (0, _graphService.findRootBlocks)(warningBlock, 'button');
-  const textBlocks = (0, _graphService.findRootBlocksWithMod)(warningBlock, 'text', 'size');
+  const textBlocks = (0, _graphService.findRootBlocks)(warningBlock, 'text');
 
   if (textBlocks.length < 1 || buttons.length < 1) {
     return [];
   }
 
-  const referenceSize = textBlocks[0].mods.size;
+  const textBlocksWithSize = textBlocks.filter(block => {
+    if (!block.mods) {
+      return false;
+    }
+
+    return block.mods.size;
+  });
+  const textSizes = textBlocksWithSize.map(block => {
+    return block.mods.size;
+  });
+  const referenceSize = textSizes[0];
   const invalidButtons = buttons.filter(button => {
     return !isButtonSizeValid(button.mods.size, referenceSize);
   });
@@ -3429,23 +3439,30 @@ var _graphService = require("../../services/graphService");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkTextDifference(warningBlock) {
-  const textBlocks = (0, _graphService.findRootBlocksWithMod)(warningBlock, 'text', 'size'); // Если в блоке нет текста
+  const textBlocks = (0, _graphService.findRootBlocks)(warningBlock, 'text');
+  const textBlocksWithSize = textBlocks.filter(block => {
+    if (!block.mods) {
+      return false;
+    }
+
+    return block.mods.size;
+  }); // Если в блоке нет текста
 
   if (textBlocks.length === 0) {
     return [];
   }
 
-  const textSizes = textBlocks.map(block => {
+  const textSizes = textBlocksWithSize.map(block => {
     return block.mods.size;
   });
   const referenceSize = textSizes[0];
-  const invalidSizes = textSizes.filter(size => {
-    return size != referenceSize;
+  const invalidBlocks = textBlocks.filter(block => {
+    return !block.mods || block.mods.size !== referenceSize;
   });
-  const isSizesEqual = invalidSizes.length === 0;
+  const isSizesEqual = invalidBlocks.length === 0;
 
   if (!isSizesEqual) {
-    const errors = invalidSizes.map(invalidSize => {
+    const errors = invalidBlocks.map(invalidSize => {
       const error = new _linterError.default(_warning.default.textSize, warningBlock);
       return error;
     });
