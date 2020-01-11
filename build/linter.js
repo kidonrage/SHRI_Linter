@@ -3001,9 +3001,7 @@ var _grid = _interopRequireDefault(require("./grid"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const defaultConfig = {
-  blocks: ['warning' // 'text',
-  // 'grid'
-  ]
+  blocks: ['warning', 'text', 'grid']
 };
 
 class Linter {

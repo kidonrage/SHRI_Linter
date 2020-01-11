@@ -7,8 +7,8 @@ import gridCheckers from './grid';
 const defaultConfig = {
   blocks: [
     'warning',
-    // 'text',
-    // 'grid'
+    'text',
+    'grid'
   ]
 }
 
