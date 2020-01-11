@@ -3558,6 +3558,11 @@ function convertAstTreeToList(root) {
 
 function getASTContent(ASTObject) {
   const contentProperty = findPropertyIn(ASTObject, 'content');
+
+  if (!contentProperty) {
+    return null;
+  }
+
   const ASTContent = contentProperty.value;
   return ASTContent;
 }
@@ -3572,6 +3577,13 @@ function getASTRoots(json) {
   }
 
   let roots = astRootObject.type === 'Array' ? astRootObject.children : [].concat(astRootObject);
+  console.log(roots); // Если в входящей строке в массиве находились другие массивы
+
+  roots.forEach((root, index) => {
+    while (roots[index].type === 'Array') {
+      roots.splice(index, 1, ...roots[index].children);
+    }
+  });
   return roots;
 }
 
@@ -3817,8 +3829,6 @@ exports.findBlocksBefore = findBlocksBefore;
 var _astService = require("./astService");
 
 function getRoots(json) {
-  console.log('json', json);
-
   if (json.length === 0) {
     return [];
   }
@@ -3830,8 +3840,14 @@ function getRoots(json) {
     roots = Array.isArray(parsedJSON) ? [].concat(...parsedJSON) : [parsedJSON];
   } catch (error) {
     console.error('Invalid JSON: ', error);
-  }
+  } // Если в входящей строке в массиве находились другие массивы
 
+
+  roots.forEach((root, index) => {
+    while (Array.isArray(roots[index])) {
+      roots = roots.flat();
+    }
+  });
   console.log('roots', roots);
   return roots;
 }
@@ -3845,10 +3861,10 @@ function getGraphs(json) {
   }
 
   const ASTRoots = (0, _astService.getASTRoots)(json);
+  console.log(roots.length, ASTRoots.length);
   const graphs = roots.map((rootObj, index) => {
     const rootASTObj = ASTRoots[index];
     const rootObjWithLoc = applyServiceData(rootObj, rootASTObj);
-    console.log(JSON.stringify(rootObjWithLoc));
     return rootObjWithLoc;
   });
   return graphs;
@@ -3915,7 +3931,6 @@ function findPositionInvalidBlocks(rootNode, beforeBlockRecognizer, afterBlockRe
   const recognizedBlocks = [].concat(...findBlocksBefore(rootNode, beforeBlockRecognizer, afterBlockRecognizer));
   const beforeBlocks = recognizedBlocks.filter(block => beforeBlockRecognizer(block));
   const afterBlocks = recognizedBlocks.filter(block => afterBlockRecognizer(block));
-  console.log('recognizedBlocks', recognizedBlocks);
 
   if (afterBlocks.length > 0) {
     let invalidBlocks = [];
@@ -3923,10 +3938,8 @@ function findPositionInvalidBlocks(rootNode, beforeBlockRecognizer, afterBlockRe
       const temp = beforeBlocks.filter(beforeBlock => {
         return recognizedBlocks.indexOf(beforeBlock) < recognizedBlocks.indexOf(afterBlock) && beforeBlock.depth <= afterBlock.depth;
       });
-      console.log('temp', temp);
       invalidBlocks = [...invalidBlocks, ...temp];
     });
-    console.log('invalidBlocks', invalidBlocks);
     return invalidBlocks;
   }
 
