@@ -42,7 +42,7 @@ function checkAds(gridBlock) {
   if (!isGridValid) {
     const error = new LinterError(
       gridErrors.advertisements,
-      gridBlock.location
+      gridBlock
     );
   
     return error;

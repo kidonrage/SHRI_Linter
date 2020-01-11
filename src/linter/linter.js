@@ -8,7 +8,7 @@ const defaultConfig = {
   blocks: [
     'warning',
     // 'text',
-    // 'grid'
+    'grid'
   ]
 }
 
@@ -68,10 +68,10 @@ export default class Linter {
     return errors;
   }
 
-  grid(blocks) {
+  grid(graph) {
     const {advertisements} = gridCheckers;
 
-    const blocksToCheck = findRootBlocksIn(blocks, 'grid');
+    const blocksToCheck = findRootBlocks(graph, 'grid');
 
     const errors = blocksToCheck.map((block) => {
       return [

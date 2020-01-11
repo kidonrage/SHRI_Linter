@@ -2937,7 +2937,7 @@ function checkAds(gridBlock) {
   const isGridValid = marketingColumnsCount / columnsCount < 0.5;
 
   if (!isGridValid) {
-    const error = new _linterError.default(_grid.default.advertisements, gridBlock.location);
+    const error = new _linterError.default(_grid.default.advertisements, gridBlock);
     return error;
   }
 
@@ -3001,9 +3001,8 @@ var _grid = _interopRequireDefault(require("./grid"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const defaultConfig = {
-  blocks: ['warning' // 'text',
-  // 'grid'
-  ]
+  blocks: ['warning', // 'text',
+  'grid']
 };
 
 class Linter {
@@ -3020,7 +3019,6 @@ class Linter {
       const graphErrors = this.blocksToCheck.map(blockName => {
         return this[blockName](rootGraph);
       });
-      console.log('graphErrors', graphErrors);
       return [].concat(...graphErrors);
     }); // 2d blocks errors array to 1d
 
@@ -3053,11 +3051,11 @@ class Linter {
     return errors;
   }
 
-  grid(blocks) {
+  grid(graph) {
     const {
       advertisements
     } = _grid.default;
-    const blocksToCheck = (0, _blocksService.findRootBlocksIn)(blocks, 'grid');
+    const blocksToCheck = (0, _graphService.findRootBlocks)(graph, 'grid');
     const errors = blocksToCheck.map(block => {
       return [advertisements(block)];
     });
