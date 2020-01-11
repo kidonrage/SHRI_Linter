@@ -1,21 +1,10 @@
 import LinterError from '../errors/linterError';
 import textErrors from '../errors/text';
-import {findRootBlocksWithMod, findBlockWithMod} from '../../services/blocksService';
+import {h1HeaderRecognizer, h2HeaderRecognizer} from './recognizers';
+import {findPositionInvalidBlocks} from '../../services/graphService';
 
-function checkH2Position(blocks) {
-  const h2Headers = findRootBlocksWithMod(blocks, 'text', 'type', 'h2');
-
-  const h1Header = findBlockWithMod(blocks, 'text', 'type', 'h1');
-  
-  if (h2Headers.length === 0 || !h1Header) {
-    return []
-  }
-
-  const h1Index = blocks.indexOf(h1Header);
-  const invalidH2Headers = h2Headers.filter((h2Header) => {
-    const h2Index = blocks.indexOf(h2Header);
-    return h2Index < h1Index && h2Header.depth >= h1Header.depth;
-  })
+function checkH2Position(graph) {
+  const invalidH2Headers = findPositionInvalidBlocks(graph, h2HeaderRecognizer, h1HeaderRecognizer);
 
   const isPositionValid = invalidH2Headers.length === 0;
   
@@ -23,7 +12,7 @@ function checkH2Position(blocks) {
     const errors = invalidH2Headers.map((invalidHeader) => {
       const error = new LinterError(
         textErrors.h2Position,
-        invalidHeader.location
+        invalidHeader
       );
     
       return error;

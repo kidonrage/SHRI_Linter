@@ -7,7 +7,7 @@ import gridCheckers from './grid';
 const defaultConfig = {
   blocks: [
     'warning',
-    // 'text',
+    'text',
     'grid'
   ]
 }
@@ -56,13 +56,13 @@ export default class Linter {
     return [].concat(...errors);
   }
 
-  text(blocks) {
+  text(graph) {
     const {h1Severalty, h2Position, h3Position} = textCheckers;
 
     const errors = [
-      ...h1Severalty(blocks),
-      ...h2Position(blocks),
-      ...h3Position(blocks)
+      ...h1Severalty(graph),
+      ...h2Position(graph),
+      ...h3Position(graph)
     ]
 
     return errors;

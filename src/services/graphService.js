@@ -1,16 +1,20 @@
 import {getASTRoots, getASTContent, parseASTLocation} from './astService';
 
 export function getRoots(json) {
+  console.log('json', json)
   if (json.length === 0) {
     return [];  
   }
 
   let roots = [];
   try {
-    roots = [].concat(JSON.parse(json));
+    const parsedJSON = JSON.parse(json);
+    roots = Array.isArray(parsedJSON) ? [].concat(...parsedJSON) : [parsedJSON];
   } catch(error) {
     console.error('Invalid JSON: ', error);
   }
+
+  console.log('roots', roots)
 
   return roots;
 }
@@ -78,7 +82,7 @@ export function findRootBlocks(rootNode, blockName) {
   const nodeContent = rootNode.content;
 
   if (!nodeContent || nodeContent.length === 0) {
-    return null;
+    return [];
   }
 
   const contentArr = [].concat(nodeContent);
@@ -88,7 +92,7 @@ export function findRootBlocks(rootNode, blockName) {
   return [].concat(...rootBlocks).filter(block => block)
 }
 
-export function findRootBlocksWithMod(rootNode, blockName, modName) {
+export function findRootBlocksWithMod(rootNode, blockName, modName, modValue) {
   const rootBlocks = findRootBlocks(rootNode, blockName);
   
   const rootBlocksWithMod = rootBlocks.filter(block => {
@@ -100,4 +104,52 @@ export function findRootBlocksWithMod(rootNode, blockName, modName) {
   })
 
   return rootBlocksWithMod;
+}
+
+export function findPositionInvalidBlocks(rootNode, beforeBlockRecognizer, afterBlockRecognizer) {
+  const recognizedBlocks = [].concat(...findBlocksBefore(rootNode, beforeBlockRecognizer, afterBlockRecognizer));
+
+  const beforeBlocks = recognizedBlocks.filter(block => beforeBlockRecognizer(block));
+  const afterBlocks = recognizedBlocks.filter(block => afterBlockRecognizer(block));
+
+  console.log('recognizedBlocks', recognizedBlocks);
+
+  if (afterBlocks.length > 0) {
+    let invalidBlocks = [];
+    afterBlocks.forEach(afterBlock => {
+      const temp = beforeBlocks.filter(beforeBlock => {
+        return recognizedBlocks.indexOf(beforeBlock) < recognizedBlocks.indexOf(afterBlock) && beforeBlock.depth <= afterBlock.depth
+      })
+
+      console.log('temp', temp);
+
+      invalidBlocks = [...invalidBlocks, ...temp];
+    })
+
+    console.log('invalidBlocks', invalidBlocks);
+
+    return invalidBlocks;
+  }
+
+  return [];
+}
+
+export function findBlocksBefore(rootNode, beforeBlockRecognizer, afterBlockRecognizer, matchedBlocks = []) {
+  let result = matchedBlocks;
+
+  if (afterBlockRecognizer(rootNode)) {
+    return [...result, rootNode];
+  }
+
+  if (beforeBlockRecognizer(rootNode)) {
+    result = [...result, rootNode];
+  }
+
+  const nodeContent = rootNode.content ? [].concat(rootNode.content) : [];
+
+  if (nodeContent.length === 0) {
+    return result;
+  }
+
+  return [].concat(...nodeContent.map(child => findBlocksBefore(child, beforeBlockRecognizer, afterBlockRecognizer, result)));
 }

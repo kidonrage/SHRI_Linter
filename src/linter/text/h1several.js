@@ -2,8 +2,8 @@ import LinterError from '../errors/linterError';
 import textErrors from '../errors/text';
 import {findRootBlocksWithMod} from '../../services/graphService';
 
-function checkH1Severalty(blocks) {
-  const h1Headers = findRootBlocksWithMod(blocks, 'text', 'type', 'h1');
+function checkH1Severalty(graph) {
+  const h1Headers = findRootBlocksWithMod(graph, 'text', 'type', 'h1');
 
   if (h1Headers.length < 1) {
     return []
