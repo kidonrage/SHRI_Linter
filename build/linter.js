@@ -3445,11 +3445,8 @@ function checkTextDifference(warningBlock) {
   const isSizesEqual = invalidSizes.length === 0;
 
   if (!isSizesEqual) {
-    const errors = invalidSizes.map(invalidSize => {
-      const error = new _linterError.default(_warning.default.textSize, warningBlock);
-      return error;
-    });
-    return errors;
+    const error = new _linterError.default(_warning.default.textSize, warningBlock);
+    return error;
   }
 
   return [];
