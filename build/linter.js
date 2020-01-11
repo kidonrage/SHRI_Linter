@@ -3408,6 +3408,10 @@ function checkPlaceholderSize(warningBlock) {
   }
 
   const invalidPlaceholders = placeholders.filter(placeholder => {
+    if (!placeholder.mods) {
+      return true;
+    }
+
     return !_sizes.placeholderSizes.includes(placeholder.mods.size);
   });
   const isPlaceholdersValid = invalidPlaceholders.length === 0;

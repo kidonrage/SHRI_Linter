@@ -11,6 +11,10 @@ function checkPlaceholderSize(warningBlock) {
   }
 
   const invalidPlaceholders = placeholders.filter((placeholder) => {
+    if (!placeholder.mods) {
+      return true;
+    }
+
     return !placeholderSizes.includes(placeholder.mods.size);
   })
 
