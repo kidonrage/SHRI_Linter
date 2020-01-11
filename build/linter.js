@@ -2762,14 +2762,14 @@ exports.default = lint;
 
 var _linter = _interopRequireDefault(require("./linter"));
 
-var _blocksService = require("./services/blocksService");
+var _graphService = require("./services/graphService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function lint(jsonString) {
   const linter = new _linter.default();
-  const blocks = [].concat((0, _blocksService.getBlocks)(jsonString));
-  const errors = linter.lint(blocks);
+  const rootGraphs = (0, _graphService.getGraphs)(jsonString);
+  const errors = linter.lint(rootGraphs);
   console.log(errors);
   return errors;
 }
@@ -2777,7 +2777,7 @@ function lint(jsonString) {
 global.lint = lint;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./linter":11,"./services/blocksService":23}],3:[function(require,module,exports){
+},{"./linter":11,"./services/graphService":24}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2827,31 +2827,14 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 
 class LinterError {
-  constructor(errorInfo, astLocation) {
+  constructor(errorInfo, errorBlock) {
     const {
       desc,
       code
     } = errorInfo;
     this.code = code;
     this.error = desc;
-    const {
-      line: startLine,
-      column: startColumn
-    } = astLocation.start;
-    const {
-      line: endLine,
-      column: endColumn
-    } = astLocation.end;
-    this.location = {
-      start: {
-        column: startColumn,
-        line: startLine
-      },
-      end: {
-        column: endColumn,
-        line: endLine
-      }
-    };
+    this.location = errorBlock.location;
   }
 
 }
@@ -3007,6 +2990,8 @@ exports.default = void 0;
 
 var _blocksService = require("../services/blocksService");
 
+var _graphService = require("../services/graphService");
+
 var _warning = _interopRequireDefault(require("./warning"));
 
 var _text = _interopRequireDefault(require("./text"));
@@ -3016,7 +3001,9 @@ var _grid = _interopRequireDefault(require("./grid"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const defaultConfig = {
-  blocks: ['warning', 'text', 'grid']
+  blocks: ['warning' // 'text',
+  // 'grid'
+  ]
 };
 
 class Linter {
@@ -3024,30 +3011,39 @@ class Linter {
     this.blocksToCheck = configuration.blocks;
   }
 
-  lint(blocks) {
-    if (blocks.length < 1) {
+  lint(graphs) {
+    if (graphs.length < 1) {
       return [];
     }
 
-    const errors = this.blocksToCheck.map(blockName => {
-      return this[blockName](blocks);
+    const errors = graphs.map(rootGraph => {
+      const graphErrors = this.blocksToCheck.map(blockName => {
+        return this[blockName](rootGraph);
+      });
+      console.log('graphErrors', graphErrors);
+      return [].concat(...graphErrors);
     }); // 2d blocks errors array to 1d
 
     const flatErrors = [].concat(...errors).filter(error => error != null);
     return flatErrors;
   }
 
-  warning(blocks) {
+  warning(graph) {
     const {
       textDifference,
       buttonSize,
       buttonPosition,
       placeholderSize
     } = _warning.default;
-    const blocksToCheck = (0, _blocksService.findBlocksIn)(blocks, 'warning');
-    const errors = blocksToCheck.map(block => {
-      return [...textDifference(block), ...buttonSize(block), ...buttonPosition(block), ...placeholderSize(block)];
+    const warningBlocks = (0, _graphService.findRootBlocks)(graph, 'warning');
+    console.log('warningBlocks', warningBlocks);
+    const errors = warningBlocks.map(block => {
+      const blockErrors = [...textDifference(block), ...buttonSize(block), ...buttonPosition(block), ...placeholderSize(block)];
+      console.log('blockErrors', blockErrors);
+      return blockErrors;
     });
+    console.log('errorsassd', errors);
+    console.log('[].concat(errors)', [].concat(...errors));
     return [].concat(...errors);
   }
 
@@ -3076,7 +3072,7 @@ class Linter {
 
 exports.default = Linter;
 
-},{"../services/blocksService":23,"./grid":10,"./text":16,"./warning":19}],13:[function(require,module,exports){
+},{"../services/blocksService":23,"../services/graphService":24,"./grid":10,"./text":16,"./warning":19}],13:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3093,7 +3089,6 @@ var _blocksService = require("../../services/blocksService");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkH1Severalty(blocks) {
-  console.log('sakdnjksabdjk', blocks.length);
   const h1Headers = (0, _blocksService.findAllBlocksWithMod)(blocks, 'text', 'type', 'h1');
 
   if (h1Headers.length < 1) {
@@ -3255,12 +3250,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function checkButtonPosition(warningBlock) {
   const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
-  const buttons = nodes.filter(node => {
-    return node.block === 'button';
-  });
-  const placeholders = nodes.filter(node => {
-    return node.block === 'placeholder';
-  });
+  const buttons = (0, _blocksService.findAllBlocks)(nodes, 'button');
+  const placeholders = (0, _blocksService.findAllBlocks)(nodes, 'placeholder');
 
   if (buttons.length === 0 || placeholders.length === 0) {
     return [];
@@ -3282,7 +3273,7 @@ function checkButtonPosition(warningBlock) {
 
   if (!isButtonsValid) {
     const errors = invalidButtons.map(invalidButton => {
-      const error = new _linterError.default(_warning.default.buttonPosition, invalidButton.location);
+      const error = new _linterError.default(_warning.default.buttonPosition, invalidButton);
       return error;
     });
     return errors;
@@ -3339,12 +3330,8 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
 
 function checkButtonSize(warningBlock) {
   const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
-  const buttons = nodes.filter(node => {
-    return node.block === 'button';
-  });
-  const firstTextBlock = nodes.find(node => {
-    return node.block === 'text';
-  });
+  const buttons = (0, _blocksService.findAllBlocks)(nodes, 'button');
+  const firstTextBlock = (0, _blocksService.findBlock)(nodes, 'text');
 
   if (buttons.length < 1 || !firstTextBlock) {
     return [];
@@ -3358,7 +3345,7 @@ function checkButtonSize(warningBlock) {
 
   if (!isSizesValid) {
     const errors = invalidButtons.map(button => {
-      const error = new _linterError.default(_warning.default.buttonSize, button.location);
+      const error = new _linterError.default(_warning.default.buttonSize, button);
       return error;
     });
     return errors;
@@ -3417,9 +3404,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function checkPlaceholderSize(warningBlock) {
   const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
-  const placeholders = nodes.filter(node => {
-    return node.block === 'placeholder';
-  });
+  const placeholders = (0, _blocksService.findAllBlocks)(nodes, 'placeholder');
 
   if (placeholders.length === 0) {
     return [];
@@ -3432,7 +3417,7 @@ function checkPlaceholderSize(warningBlock) {
 
   if (!isPlaceholdersValid) {
     const errors = invalidPlaceholders.map(invalidPlaceholder => {
-      const error = new _linterError.default(_warning.default.placeholderSize, invalidPlaceholder.location);
+      const error = new _linterError.default(_warning.default.placeholderSize, invalidPlaceholder);
       return error;
     });
     return errors;
@@ -3462,9 +3447,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function checkTextDifference(warningBlock) {
   const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
-  const textBlocks = nodes.filter(node => {
-    return node.block === 'text' && !node.elem;
-  }); // Если в блоке нет текста
+  const textBlocks = (0, _blocksService.findAllBlocks)(nodes, 'text'); // Если в блоке нет текста
 
   if (textBlocks.length === 0) {
     return [];
@@ -3481,7 +3464,7 @@ function checkTextDifference(warningBlock) {
 
   if (!isSizesEqual) {
     const errors = invalidSizes.map(invalidSize => {
-      const error = new _linterError.default(_warning.default.textSize, warningBlock.location);
+      const error = new _linterError.default(_warning.default.textSize, warningBlock);
       return error;
     });
     return errors;
@@ -3501,6 +3484,13 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.getChildASTBlocksIn = getChildASTBlocksIn;
 exports.convertAstTreeToList = convertAstTreeToList;
+exports.getASTContent = getASTContent;
+exports.getASTRoots = getASTRoots;
+exports.parseASTLocation = void 0;
+
+var _jsonToAst = _interopRequireDefault(require("json-to-ast"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const findPropertyIn = (astObject, propertyName) => {
   return astObject.children.find(child => {
@@ -3584,7 +3574,49 @@ function convertAstTreeToList(root) {
   return array;
 }
 
-},{}],23:[function(require,module,exports){
+function getASTContent(ASTObject) {
+  const contentProperty = findPropertyIn(ASTObject, 'content');
+  const ASTContent = contentProperty.value;
+  return ASTContent;
+}
+
+function getASTRoots(json) {
+  let astRootObject = {};
+
+  try {
+    astRootObject = (0, _jsonToAst.default)(json);
+  } catch (error) {
+    console.error('Invalid JSON: ', error);
+  }
+
+  let roots = astRootObject.type === 'Array' ? astRootObject.children : [].concat(astRootObject);
+  return roots;
+}
+
+const parseASTLocation = ASTBlock => {
+  const {
+    line: startLine,
+    column: startColumn
+  } = ASTBlock.loc.start;
+  const {
+    line: endLine,
+    column: endColumn
+  } = ASTBlock.loc.end;
+  return {
+    start: {
+      line: startLine,
+      column: startColumn
+    },
+    end: {
+      line: endLine,
+      column: endColumn
+    }
+  };
+};
+
+exports.parseASTLocation = parseASTLocation;
+
+},{"json-to-ast":1}],23:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3778,7 +3810,6 @@ function findAllBlocks(list, blockName) {
 }
 
 function findAllBlocksWithMod(list, blockName, modName, modValue) {
-  console.log('list', list);
   return list.filter(block => {
     if (!block.mods) {
       return false;
@@ -3788,4 +3819,94 @@ function findAllBlocksWithMod(list, blockName, modName, modValue) {
   });
 }
 
-},{"./astService":22,"json-to-ast":1}]},{},[2]);
+},{"./astService":22,"json-to-ast":1}],24:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getRoots = getRoots;
+exports.getGraphs = getGraphs;
+exports.findRootBlocks = findRootBlocks;
+
+var _astService = require("./astService");
+
+function getRoots(json) {
+  if (json.length === 0) {
+    return [];
+  }
+
+  let roots = [];
+
+  try {
+    roots = [].concat(JSON.parse(json));
+  } catch (error) {
+    console.error('Invalid JSON: ', error);
+  }
+
+  return roots;
+}
+
+function getGraphs(json) {
+  // Если в входящем json массив, нужно вернуть массив корневых объектов
+  const roots = getRoots(json);
+
+  if (roots.length === 0) {
+    return [];
+  }
+
+  const ASTRoots = (0, _astService.getASTRoots)(json);
+  const graphs = roots.map((rootObj, index) => {
+    const rootASTObj = ASTRoots[index];
+    const rootObjWithLoc = applyServiceData(rootObj, rootASTObj);
+    console.log(JSON.stringify(rootObjWithLoc));
+    return rootObjWithLoc;
+  });
+  return graphs;
+} // Инъекцирует данные о локации и глубине вложенности
+
+
+function applyServiceData(block, ASTBlock, depth = 0) {
+  if (Array.isArray(block) && ASTBlock.type === 'Array') {
+    return block.map((childBlock, index) => {
+      return applyServiceData(childBlock, ASTBlock.children[index], depth + 1);
+    });
+  }
+
+  const blockContent = block.content;
+
+  if (!blockContent) {
+    return { ...block,
+      depth,
+      location: (0, _astService.parseASTLocation)(ASTBlock)
+    };
+  }
+
+  const ASTBlockContent = (0, _astService.getASTContent)(ASTBlock);
+  const contentWithLocation = applyServiceData(blockContent, ASTBlockContent, depth + 1);
+  let result = { ...block,
+    depth,
+    content: contentWithLocation,
+    location: (0, _astService.parseASTLocation)(ASTBlock)
+  };
+  return result;
+}
+
+function findRootBlocks(rootNode, blockName) {
+  const nodeName = rootNode.block;
+
+  if (nodeName === blockName) {
+    return [rootNode];
+  }
+
+  const nodeContent = rootNode.content;
+
+  if (!nodeContent || nodeContent.length === 0) {
+    return null;
+  }
+
+  const contentArr = [].concat(nodeContent);
+  return contentArr.map(childNode => findRootBlocks(childNode, blockName));
+}
+
+},{"./astService":22}]},{},[2]);
