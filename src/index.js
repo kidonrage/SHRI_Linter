@@ -1,12 +1,12 @@
 import Linter from './linter';
-import {getBlocks} from './services/blocksService';
+import {getGraphs} from './services/graphService';
 
 export default function lint(jsonString) {
   const linter = new Linter();
 
-  const blocks = [].concat(getBlocks(jsonString));
+  const rootGraphs = getGraphs(jsonString);
   
-  const errors = linter.lint(blocks);
+  const errors = linter.lint(rootGraphs);
 
   console.log(errors);
 

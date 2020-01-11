@@ -1,4 +1,5 @@
 import {findBlocksIn, findRootBlocksIn} from '../services/blocksService';
+import {findRootBlocks} from '../services/graphService';
 import warningCheckers from './warning';
 import textCheckers from './text';
 import gridCheckers from './grid';
@@ -6,8 +7,8 @@ import gridCheckers from './grid';
 const defaultConfig = {
   blocks: [
     'warning',
-    'text',
-    'grid'
+    // 'text',
+    // 'grid'
   ]
 }
 
@@ -17,13 +18,19 @@ export default class Linter {
     this.blocksToCheck = configuration.blocks;
   }
 
-  lint(blocks) {
-    if (blocks.length < 1) {
+  lint(graphs) {
+    if (graphs.length < 1) {
       return [];
     }
 
-    const errors = this.blocksToCheck.map((blockName) => {
-      return this[blockName](blocks)
+    const errors = graphs.map(rootGraph => {
+      const graphErrors = this.blocksToCheck.map((blockName) => {
+        return this[blockName](rootGraph)
+      })
+
+      console.log('graphErrors', graphErrors)
+
+      return [].concat(...graphErrors)
     })
 
     // 2d blocks errors array to 1d
@@ -32,19 +39,28 @@ export default class Linter {
     return flatErrors;
   }
 
-  warning(blocks) {
+  warning(graph) {
     const {textDifference, buttonSize, buttonPosition, placeholderSize} = warningCheckers;
 
-    const blocksToCheck = findBlocksIn(blocks, 'warning');
+    const warningBlocks = findRootBlocks(graph, 'warning');
 
-    const errors = blocksToCheck.map((block) => {
-      return [
+    console.log('warningBlocks', warningBlocks);
+
+    const errors = warningBlocks.map((block) => {
+      const blockErrors = [
         ...textDifference(block),
         ...buttonSize(block),
         ...buttonPosition(block),
         ...placeholderSize(block)
       ]
+      
+      console.log('blockErrors', blockErrors)
+      return blockErrors;
     });
+
+    console.log('errorsassd', errors)
+
+    console.log('[].concat(errors)', [].concat(...errors))
 
     return [].concat(...errors);
   }
