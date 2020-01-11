@@ -1,9 +1,9 @@
 import LinterError from '../errors/linterError';
 import textErrors from '../errors/text';
-import {findAllBlocksWithMod, findBlockWithMod} from '../../services/blocksService';
+import {findRootBlocksWithMod, findBlockWithMod} from '../../services/blocksService';
 
 function checkH2Position(blocks) {
-  const h2Headers = findAllBlocksWithMod(blocks, 'text', 'type', 'h2');
+  const h2Headers = findRootBlocksWithMod(blocks, 'text', 'type', 'h2');
 
   const h1Header = findBlockWithMod(blocks, 'text', 'type', 'h1');
   

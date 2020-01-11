@@ -1,10 +1,10 @@
 import LinterError from '../errors/linterError';
 import textErrors from '../errors/text';
-import {findAllBlocksWithMod} from '../../services/blocksService';
+import {findRootBlocksWithMod} from '../../services/graphService';
 
 function checkH3Position(blocks) {
-  const h3Headers = findAllBlocksWithMod(blocks, 'text', 'type', 'h3');
-  const h2Headers = findAllBlocksWithMod(blocks, 'text', 'type', 'h2');
+  const h3Headers = findRootBlocksWithMod(blocks, 'text', 'type', 'h3');
+  const h2Headers = findRootBlocksWithMod(blocks, 'text', 'type', 'h2');
 
   if (h3Headers.length === 0 || h2Headers.length === 0) {
     return []

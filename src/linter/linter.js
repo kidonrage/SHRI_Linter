@@ -7,7 +7,7 @@ import gridCheckers from './grid';
 const defaultConfig = {
   blocks: [
     'warning',
-    'text',
+    // 'text',
     'grid'
   ]
 }
@@ -28,8 +28,6 @@ export default class Linter {
         return this[blockName](rootGraph)
       })
 
-      console.log('graphErrors', graphErrors)
-
       return [].concat(...graphErrors)
     })
 
@@ -44,8 +42,6 @@ export default class Linter {
 
     const warningBlocks = findRootBlocks(graph, 'warning');
 
-    console.log('warningBlocks', warningBlocks);
-
     const errors = warningBlocks.map((block) => {
       const blockErrors = [
         ...textDifference(block),
@@ -53,14 +49,9 @@ export default class Linter {
         ...buttonPosition(block),
         ...placeholderSize(block)
       ]
-      
-      console.log('blockErrors', blockErrors)
+
       return blockErrors;
     });
-
-    console.log('errorsassd', errors)
-
-    console.log('[].concat(errors)', [].concat(...errors))
 
     return [].concat(...errors);
   }
@@ -77,10 +68,10 @@ export default class Linter {
     return errors;
   }
 
-  grid(blocks) {
+  grid(graph) {
     const {advertisements} = gridCheckers;
 
-    const blocksToCheck = findRootBlocksIn(blocks, 'grid');
+    const blocksToCheck = findRootBlocks(graph, 'grid');
 
     const errors = blocksToCheck.map((block) => {
       return [

@@ -2937,7 +2937,7 @@ function checkAds(gridBlock) {
   const isGridValid = marketingColumnsCount / columnsCount < 0.5;
 
   if (!isGridValid) {
-    const error = new _linterError.default(_grid.default.advertisements, gridBlock.location);
+    const error = new _linterError.default(_grid.default.advertisements, gridBlock);
     return error;
   }
 
@@ -3001,7 +3001,8 @@ var _grid = _interopRequireDefault(require("./grid"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const defaultConfig = {
-  blocks: ['warning', 'text', 'grid']
+  blocks: ['warning', // 'text',
+  'grid']
 };
 
 class Linter {
@@ -3018,7 +3019,7 @@ class Linter {
       const graphErrors = this.blocksToCheck.map(blockName => {
         return this[blockName](rootGraph);
       });
-      console.log('graphErrors', graphErrors);
+
       return [].concat(...graphErrors);
     }); // 2d blocks errors array to 1d
 
@@ -3034,10 +3035,10 @@ class Linter {
       placeholderSize
     } = _warning.default;
     const warningBlocks = (0, _graphService.findRootBlocks)(graph, 'warning');
-    console.log('warningBlocks', warningBlocks);
+
     const errors = warningBlocks.map(block => {
       const blockErrors = [...textDifference(block), ...buttonSize(block), ...buttonPosition(block), ...placeholderSize(block)];
-      console.log('blockErrors', blockErrors);
+
       return blockErrors;
     });
     console.log('errorsassd', errors);
@@ -3055,11 +3056,11 @@ class Linter {
     return errors;
   }
 
-  grid(blocks) {
+  grid(graph) {
     const {
       advertisements
     } = _grid.default;
-    const blocksToCheck = (0, _blocksService.findRootBlocksIn)(blocks, 'grid');
+    const blocksToCheck = (0, _graphService.findRootBlocks)(graph, 'grid');
     const errors = blocksToCheck.map(block => {
       return [advertisements(block)];
     });
@@ -3082,12 +3083,14 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _text = _interopRequireDefault(require("../errors/text"));
 
-var _blocksService = require("../../services/blocksService");
+var _graphService = require("../../services/graphService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkH1Severalty(blocks) {
-  const h1Headers = (0, _blocksService.findAllBlocksWithMod)(blocks, 'text', 'type', 'h1');
+
+  const h1Headers = (0, _graphService.findRootBlocksWithMod)(blocks, 'text', 'type', 'h1');
+
 
   if (h1Headers.length < 1) {
     return [];
@@ -3109,7 +3112,7 @@ function checkH1Severalty(blocks) {
 var _default = checkH1Severalty;
 exports.default = _default;
 
-},{"../../services/blocksService":23,"../errors/linterError":6,"../errors/text":7}],14:[function(require,module,exports){
+},{"../../services/graphService":24,"../errors/linterError":6,"../errors/text":7}],14:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3126,7 +3129,7 @@ var _blocksService = require("../../services/blocksService");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkH2Position(blocks) {
-  const h2Headers = (0, _blocksService.findAllBlocksWithMod)(blocks, 'text', 'type', 'h2');
+  const h2Headers = (0, _blocksService.findRootBlocksWithMod)(blocks, 'text', 'type', 'h2');
   const h1Header = (0, _blocksService.findBlockWithMod)(blocks, 'text', 'type', 'h1');
 
   if (h2Headers.length === 0 || !h1Header) {
@@ -3166,13 +3169,13 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _text = _interopRequireDefault(require("../errors/text"));
 
-var _blocksService = require("../../services/blocksService");
+var _graphService = require("../../services/graphService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkH3Position(blocks) {
-  const h3Headers = (0, _blocksService.findAllBlocksWithMod)(blocks, 'text', 'type', 'h3');
-  const h2Headers = (0, _blocksService.findAllBlocksWithMod)(blocks, 'text', 'type', 'h2');
+  const h3Headers = (0, _graphService.findRootBlocksWithMod)(blocks, 'text', 'type', 'h3');
+  const h2Headers = (0, _graphService.findRootBlocksWithMod)(blocks, 'text', 'type', 'h2');
 
   if (h3Headers.length === 0 || h2Headers.length === 0) {
     return [];
@@ -3206,7 +3209,7 @@ function checkH3Position(blocks) {
 var _default = checkH3Position;
 exports.default = _default;
 
-},{"../../services/blocksService":23,"../errors/linterError":6,"../errors/text":7}],16:[function(require,module,exports){
+},{"../../services/graphService":24,"../errors/linterError":6,"../errors/text":7}],16:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3242,14 +3245,16 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _warning = _interopRequireDefault(require("../errors/warning"));
 
+var _graphService = require("../../services/graphService");
+
 var _blocksService = require("../../services/blocksService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkButtonPosition(warningBlock) {
   const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
-  const buttons = (0, _blocksService.findAllBlocks)(nodes, 'button');
-  const placeholders = (0, _blocksService.findAllBlocks)(nodes, 'placeholder');
+  const buttons = (0, _graphService.findRootBlocks)(warningBlock, 'button');
+  const placeholders = (0, _graphService.findRootBlocks)(warningBlock, 'placeholder');
 
   if (buttons.length === 0 || placeholders.length === 0) {
     return [];
@@ -3283,7 +3288,7 @@ function checkButtonPosition(warningBlock) {
 var _default = checkButtonPosition;
 exports.default = _default;
 
-},{"../../services/blocksService":23,"../errors/linterError":6,"../errors/warning":8}],18:[function(require,module,exports){
+},{"../../services/blocksService":23,"../../services/graphService":24,"../errors/linterError":6,"../errors/warning":8}],18:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3295,7 +3300,7 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _warning = _interopRequireDefault(require("../errors/warning"));
 
-var _blocksService = require("../../services/blocksService");
+var _graphService = require("../../services/graphService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -3327,9 +3332,8 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
 };
 
 function checkButtonSize(warningBlock) {
-  const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
-  const buttons = (0, _blocksService.findAllBlocks)(nodes, 'button');
-  const firstTextBlock = (0, _blocksService.findBlock)(nodes, 'text');
+  const buttons = (0, _graphService.findRootBlocks)(warningBlock, 'button');
+  const firstTextBlock = (0, _graphService.findRootBlocks)(warningBlock, 'text')[0];
 
   if (buttons.length < 1 || !firstTextBlock) {
     return [];
@@ -3355,7 +3359,7 @@ function checkButtonSize(warningBlock) {
 var _default = checkButtonSize;
 exports.default = _default;
 
-},{"../../services/blocksService":23,"../errors/linterError":6,"../errors/warning":8}],19:[function(require,module,exports){
+},{"../../services/graphService":24,"../errors/linterError":6,"../errors/warning":8}],19:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3394,15 +3398,14 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _warning = _interopRequireDefault(require("../errors/warning"));
 
-var _blocksService = require("../../services/blocksService");
+var _graphService = require("../../services/graphService");
 
 var _sizes = require("../enums/sizes");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkPlaceholderSize(warningBlock) {
-  const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
-  const placeholders = (0, _blocksService.findAllBlocks)(nodes, 'placeholder');
+  const placeholders = (0, _graphService.findRootBlocks)(warningBlock, 'placeholder');
 
   if (placeholders.length === 0) {
     return [];
@@ -3427,7 +3430,7 @@ function checkPlaceholderSize(warningBlock) {
 var _default = checkPlaceholderSize;
 exports.default = _default;
 
-},{"../../services/blocksService":23,"../enums/sizes":4,"../errors/linterError":6,"../errors/warning":8}],21:[function(require,module,exports){
+},{"../../services/graphService":24,"../enums/sizes":4,"../errors/linterError":6,"../errors/warning":8}],21:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3439,13 +3442,12 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _warning = _interopRequireDefault(require("../errors/warning"));
 
-var _blocksService = require("../../services/blocksService");
+var _graphService = require("../../services/graphService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkTextDifference(warningBlock) {
-  const nodes = (0, _blocksService.convertTreeToList)(warningBlock);
-  const textBlocks = (0, _blocksService.findAllBlocks)(nodes, 'text'); // Если в блоке нет текста
+  const textBlocks = (0, _graphService.findRootBlocks)(warningBlock, 'text'); // Если в блоке нет текста
 
   if (textBlocks.length === 0) {
     return [];
@@ -3474,7 +3476,7 @@ function checkTextDifference(warningBlock) {
 var _default = checkTextDifference;
 exports.default = _default;
 
-},{"../../services/blocksService":23,"../errors/linterError":6,"../errors/warning":8}],22:[function(require,module,exports){
+},{"../../services/graphService":24,"../errors/linterError":6,"../errors/warning":8}],22:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3826,6 +3828,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.getRoots = getRoots;
 exports.getGraphs = getGraphs;
 exports.findRootBlocks = findRootBlocks;
+exports.findRootBlocksWithMod = findRootBlocksWithMod;
 
 var _astService = require("./astService");
 
@@ -3904,7 +3907,20 @@ function findRootBlocks(rootNode, blockName) {
   }
 
   const contentArr = [].concat(nodeContent);
-  return contentArr.map(childNode => findRootBlocks(childNode, blockName));
+  const rootBlocks = contentArr.map(childNode => findRootBlocks(childNode, blockName));
+  return [].concat(...rootBlocks).filter(block => block);
+}
+
+function findRootBlocksWithMod(rootNode, blockName, modName) {
+  const rootBlocks = findRootBlocks(rootNode, blockName);
+  const rootBlocksWithMod = rootBlocks.filter(block => {
+    if (!block.mods) {
+      return false;
+    }
+
+    return block.mods[modName] === modValue;
+  });
+  return rootBlocksWithMod;
 }
 
 },{"./astService":22}]},{},[2]);
