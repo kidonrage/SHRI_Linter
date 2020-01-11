@@ -99,15 +99,29 @@ export function findRootBlocks(rootNode, blockName) {
   return [].concat(...rootBlocks).filter(block => block)
 }
 
-export function findRootBlocksWithMod(rootNode, blockName, modName, modValue) {
+export function findRootBlocksWithModValue(rootNode, blockName, modName, modValue) {
   const rootBlocks = findRootBlocks(rootNode, blockName);
   
-  const rootBlocksWithMod = rootBlocks.filter(block => {
+  const rootBlocksWithModValue = rootBlocks.filter(block => {
     if (!block.mods) {
       return false
     }
 
     return block.mods[modName] === modValue;
+  })
+
+  return rootBlocksWithModValue;
+}
+
+export function findRootBlocksWithMod(rootNode, blockName, modName) {
+  const rootBlocks = findRootBlocks(rootNode, blockName);
+  
+  const rootBlocksWithMod = rootBlocks.filter(block => {
+    if (!block.mods) {
+      return false;
+    }
+    
+    return block.mods[modName];
   })
 
   return rootBlocksWithMod;

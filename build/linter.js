@@ -3082,7 +3082,7 @@ var _graphService = require("../../services/graphService");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkH1Severalty(graph) {
-  const h1Headers = (0, _graphService.findRootBlocksWithMod)(graph, 'text', 'type', 'h1');
+  const h1Headers = (0, _graphService.findRootBlocksWithModValue)(graph, 'text', 'type', 'h1');
 
   if (h1Headers.length < 1) {
     return [];
@@ -3315,16 +3315,13 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
 
 function checkButtonSize(warningBlock) {
   const buttons = (0, _graphService.findRootBlocks)(warningBlock, 'button');
-  const textBlocks = (0, _graphService.findRootBlocks)(warningBlock, 'text');
+  const textBlocks = (0, _graphService.findRootBlocksWithMod)(warningBlock, 'text', 'size');
 
   if (textBlocks.length < 1 || buttons.length < 1) {
     return [];
   }
 
-  const sortedTextBlocks = textBlocks.sort((a, b) => {
-    return a.mods.type - b.mods.type;
-  });
-  const referenceSize = sortedTextBlocks[0].mods.size;
+  const referenceSize = textBlocks[0].mods.size;
   const invalidButtons = buttons.filter(button => {
     return !isButtonSizeValid(button.mods.size, referenceSize);
   });
@@ -3432,7 +3429,7 @@ var _graphService = require("../../services/graphService");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkTextDifference(warningBlock) {
-  const textBlocks = (0, _graphService.findRootBlocks)(warningBlock, 'text'); // Если в блоке нет текста
+  const textBlocks = (0, _graphService.findRootBlocksWithMod)(warningBlock, 'text', 'size'); // Если в блоке нет текста
 
   if (textBlocks.length === 0) {
     return [];
@@ -3824,6 +3821,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.getRoots = getRoots;
 exports.getGraphs = getGraphs;
 exports.findRootBlocks = findRootBlocks;
+exports.findRootBlocksWithModValue = findRootBlocksWithModValue;
 exports.findRootBlocksWithMod = findRootBlocksWithMod;
 exports.findPositionInvalidBlocks = findPositionInvalidBlocks;
 exports.findBlocksBefore = findBlocksBefore;
@@ -3917,14 +3915,26 @@ function findRootBlocks(rootNode, blockName) {
   return [].concat(...rootBlocks).filter(block => block);
 }
 
-function findRootBlocksWithMod(rootNode, blockName, modName, modValue) {
+function findRootBlocksWithModValue(rootNode, blockName, modName, modValue) {
+  const rootBlocks = findRootBlocks(rootNode, blockName);
+  const rootBlocksWithModValue = rootBlocks.filter(block => {
+    if (!block.mods) {
+      return false;
+    }
+
+    return block.mods[modName] === modValue;
+  });
+  return rootBlocksWithModValue;
+}
+
+function findRootBlocksWithMod(rootNode, blockName, modName) {
   const rootBlocks = findRootBlocks(rootNode, blockName);
   const rootBlocksWithMod = rootBlocks.filter(block => {
     if (!block.mods) {
       return false;
     }
 
-    return block.mods[modName] === modValue;
+    return block.mods[modName];
   });
   return rootBlocksWithMod;
 }
