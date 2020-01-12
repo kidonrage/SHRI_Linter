@@ -1,4 +1,4 @@
-import {findRootBlocks} from '../services/graphService';
+import {findBlocksWithName} from '../services/graphService';
 import warningCheckers from './warning';
 import textCheckers from './text';
 import gridCheckers from './grid';
@@ -39,7 +39,7 @@ export default class Linter {
   warning(graph) {
     const {textDifference, buttonSize, buttonPosition, placeholderSize} = warningCheckers;
 
-    const warningBlocks = findRootBlocks(graph, 'warning');
+    const warningBlocks = findBlocksWithName(graph, 'warning');
 
     const errors = warningBlocks.map((block) => {
       const blockErrors = [
@@ -70,7 +70,7 @@ export default class Linter {
   grid(graph) {
     const {advertisements} = gridCheckers;
 
-    const blocksToCheck = findRootBlocks(graph, 'grid');
+    const blocksToCheck = findBlocksWithName(graph, 'grid');
 
     const errors = blocksToCheck.map((block) => {
       return [

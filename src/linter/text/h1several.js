@@ -15,7 +15,7 @@ function checkH1Severalty(graph) {
     const errors = h1Headers.slice(1).map((invalidHeader) => {
       const error = new LinterError(
         textErrors.severalH1,
-        invalidHeader.location
+        invalidHeader
       );
     
       return error;

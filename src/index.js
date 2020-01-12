@@ -8,7 +8,7 @@ export default function lint(jsonString) {
   
   const errors = linter.lint(rootGraphs);
 
-  console.log(errors);
+  console.log('RESULT', errors);
 
   return errors;
 }

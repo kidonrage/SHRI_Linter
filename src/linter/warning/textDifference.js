@@ -1,9 +1,9 @@
 import LinterError from '../errors/linterError';
 import warningErrors from '../errors/warning';
-import {findRootBlocks} from '../../services/graphService';
+import {findBlocksWithName} from '../../services/graphService';
 
 function checkTextDifference(warningBlock) {
-  const textBlocks = findRootBlocks(warningBlock, 'text');
+  const textBlocks = findBlocksWithName(warningBlock, 'text');
 
   const textBlocksWithSize = textBlocks.filter(block => {
     if (!block.mods) {

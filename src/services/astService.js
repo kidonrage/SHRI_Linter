@@ -37,57 +37,6 @@ function getMixedASTBlocksOf(node) {
   return mixedBlocks;
 }
 
-export function getChildASTBlocksIn(node) {
-  let childNodes = [];
-
-  if (node.type === 'Array') {
-    childNodes = [].concat(node.children);
-  } else {
-    const contentProperty = findPropertyIn(node, 'content');
-    if (contentProperty) {
-      const contentValue = contentProperty.value.type === 'Array' ? contentProperty.value.children : contentProperty.value;
-      childNodes = [].concat(contentValue);
-    }
-  }
-
-  const childBlocks = childNodes.filter(node => {
-    return isBlock(node);
-  });
-
-  return childBlocks
-}
-
-export function convertAstTreeToList(root) {
-  let stack = [], array = [];
-
-  // Root - всегда объект с полем type (Array либо Object)
-  const rootIsArray = root.type === 'Array'
-  if (rootIsArray) {
-    stack.push(...root.children);
-  } else {
-    stack.push(root);
-  }
-
-  while(stack.length !== 0) {
-      let node = stack.shift();
-
-      array.push(node);
-
-      const nodeMixins = getMixedASTBlocksOf(node);
-      array.push(...nodeMixins);
-      
-      const nodeChildren = getChildASTBlocksIn(node);
-
-      if (nodeChildren.length === 0) {
-        continue;
-      } else {
-        stack.unshift(...nodeChildren);
-      }
-  }
-
-  return array;
-}
-
 export function getASTContent(ASTObject) {
   const contentProperty = findPropertyIn(ASTObject, 'content');
 

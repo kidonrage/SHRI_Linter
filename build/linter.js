@@ -2770,14 +2770,14 @@ function lint(jsonString) {
   const linter = new _linter.default();
   const rootGraphs = (0, _graphService.getGraphs)(jsonString);
   const errors = linter.lint(rootGraphs);
-  console.log(errors);
+  console.log('RESULT', errors);
   return errors;
 }
 
 global.lint = lint;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./linter":11,"./services/graphService":25}],3:[function(require,module,exports){
+},{"./linter":11,"./services/graphService":24}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2905,7 +2905,7 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _grid = _interopRequireDefault(require("../errors/grid"));
 
-var _blocksService = require("../../services/blocksService");
+var _graphService = require("../../services/graphService");
 
 var _contentBlocks = require("../enums/contentBlocks");
 
@@ -2913,26 +2913,22 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function checkAds(gridBlock) {
   const columnsCount = parseInt(gridBlock.mods['m-columns'], 10);
-  const columnBlocks = (0, _blocksService.convertTreeToList)(gridBlock).filter(child => child.elem === 'fraction');
-  const childBlocks = columnBlocks.map(column => {
+  const columnBlocks = (0, _graphService.findAllElementsInBlock)(gridBlock, 'fraction');
+  const marketingBlocks = columnBlocks.map(column => {
     const columnSize = parseInt(column.elemMods['m-col'], 10);
-    let isMarketing = false;
-    const columnNodesList = (0, _blocksService.convertTreeToList)(column);
-    const block = columnNodesList.find(node => {
-      isMarketing = false;
-
-      if (_contentBlocks.marketing.includes(node.block)) {
-        isMarketing = true;
-      }
-
-      return isMarketing || _contentBlocks.infoFuncTional.includes(node.block);
+    const marketingNode = (0, _graphService.findNodeIn)(column, node => {
+      const nodeBlockName = node.block;
+      return _contentBlocks.marketing.includes(nodeBlockName);
     });
-    return { ...block,
-      isMarketing,
+
+    if (!marketingNode) {
+      return null;
+    }
+
+    return { ...marketingNode,
       sizeInColumns: columnSize
     };
-  });
-  const marketingBlocks = childBlocks.filter(block => block.isMarketing);
+  }).filter(node => node);
   const marketingColumnsCount = marketingBlocks.map(block => block.sizeInColumns);
   const isGridValid = marketingColumnsCount / columnsCount < 0.5;
 
@@ -2947,7 +2943,7 @@ function checkAds(gridBlock) {
 var _default = checkAds;
 exports.default = _default;
 
-},{"../../services/blocksService":24,"../enums/contentBlocks":3,"../errors/grid":5,"../errors/linterError":6}],10:[function(require,module,exports){
+},{"../../services/graphService":24,"../enums/contentBlocks":3,"../errors/grid":5,"../errors/linterError":6}],10:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2987,8 +2983,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-
-var _blocksService = require("../services/blocksService");
 
 var _graphService = require("../services/graphService");
 
@@ -3032,7 +3026,7 @@ class Linter {
       buttonPosition,
       placeholderSize
     } = _warning.default;
-    const warningBlocks = (0, _graphService.findRootBlocks)(graph, 'warning');
+    const warningBlocks = (0, _graphService.findBlocksWithName)(graph, 'warning');
     const errors = warningBlocks.map(block => {
       const blockErrors = [...textDifference(block), ...buttonSize(block), ...buttonPosition(block), ...placeholderSize(block)];
       return blockErrors;
@@ -3054,7 +3048,7 @@ class Linter {
     const {
       advertisements
     } = _grid.default;
-    const blocksToCheck = (0, _graphService.findRootBlocks)(graph, 'grid');
+    const blocksToCheck = (0, _graphService.findBlocksWithName)(graph, 'grid');
     const errors = blocksToCheck.map(block => {
       return [advertisements(block)];
     });
@@ -3065,7 +3059,7 @@ class Linter {
 
 exports.default = Linter;
 
-},{"../services/blocksService":24,"../services/graphService":25,"./grid":10,"./text":16,"./warning":20}],13:[function(require,module,exports){
+},{"../services/graphService":24,"./grid":10,"./text":16,"./warning":20}],13:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3092,7 +3086,7 @@ function checkH1Severalty(graph) {
 
   if (!isHeadersValid) {
     const errors = h1Headers.slice(1).map(invalidHeader => {
-      const error = new _linterError.default(_text.default.severalH1, invalidHeader.location);
+      const error = new _linterError.default(_text.default.severalH1, invalidHeader);
       return error;
     });
     return errors;
@@ -3104,7 +3098,7 @@ function checkH1Severalty(graph) {
 var _default = checkH1Severalty;
 exports.default = _default;
 
-},{"../../services/graphService":25,"../errors/linterError":6,"../errors/text":7}],14:[function(require,module,exports){
+},{"../../services/graphService":24,"../errors/linterError":6,"../errors/text":7}],14:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3123,7 +3117,7 @@ var _graphService = require("../../services/graphService");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkH2Position(graph) {
-  const invalidH2Headers = (0, _graphService.findPositionInvalidBlocks)(graph, _recognizers.h2HeaderRecognizer, _recognizers.h1HeaderRecognizer);
+  const invalidH2Headers = (0, _graphService.findChildBlocksPlacedBeforeOtherBlocks)(graph, _recognizers.h2HeaderRecognizer, _recognizers.h1HeaderRecognizer);
   const isPositionValid = invalidH2Headers.length === 0;
 
   if (!isPositionValid) {
@@ -3140,7 +3134,7 @@ function checkH2Position(graph) {
 var _default = checkH2Position;
 exports.default = _default;
 
-},{"../../services/graphService":25,"../errors/linterError":6,"../errors/text":7,"./recognizers":17}],15:[function(require,module,exports){
+},{"../../services/graphService":24,"../errors/linterError":6,"../errors/text":7,"./recognizers":17}],15:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3159,7 +3153,7 @@ var _graphService = require("../../services/graphService");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkH3Position(graph) {
-  const invalidH3Headers = (0, _graphService.findPositionInvalidBlocks)(graph, _recognizers.h3HeaderRecognizer, _recognizers.h2HeaderRecognizer);
+  const invalidH3Headers = (0, _graphService.findChildBlocksPlacedBeforeOtherBlocks)(graph, _recognizers.h3HeaderRecognizer, _recognizers.h2HeaderRecognizer);
   const isPositionValid = invalidH3Headers.length === 0;
 
   if (!isPositionValid) {
@@ -3176,7 +3170,7 @@ function checkH3Position(graph) {
 var _default = checkH3Position;
 exports.default = _default;
 
-},{"../../services/graphService":25,"../errors/linterError":6,"../errors/text":7,"./recognizers":17}],16:[function(require,module,exports){
+},{"../../services/graphService":24,"../errors/linterError":6,"../errors/text":7,"./recognizers":17}],16:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3253,7 +3247,7 @@ const placeholderRecognizer = block => {
 };
 
 function checkButtonPosition(warningBlock) {
-  const invalidButtons = (0, _graphService.findPositionInvalidBlocks)(warningBlock, buttonRecognizer, placeholderRecognizer);
+  const invalidButtons = (0, _graphService.findChildBlocksPlacedBeforeOtherBlocks)(warningBlock, buttonRecognizer, placeholderRecognizer);
   const isButtonsValid = invalidButtons.length === 0;
 
   if (!isButtonsValid) {
@@ -3270,7 +3264,7 @@ function checkButtonPosition(warningBlock) {
 var _default = checkButtonPosition;
 exports.default = _default;
 
-},{"../../services/graphService":25,"../errors/linterError":6,"../errors/warning":8}],19:[function(require,module,exports){
+},{"../../services/graphService":24,"../errors/linterError":6,"../errors/warning":8}],19:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3314,8 +3308,8 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
 };
 
 function checkButtonSize(warningBlock) {
-  const buttons = (0, _graphService.findRootBlocks)(warningBlock, 'button');
-  const textBlocks = (0, _graphService.findRootBlocks)(warningBlock, 'text');
+  const buttons = (0, _graphService.findBlocksWithName)(warningBlock, 'button');
+  const textBlocks = (0, _graphService.findBlocksWithName)(warningBlock, 'text');
 
   if (textBlocks.length < 1 || buttons.length < 1) {
     return [];
@@ -3355,7 +3349,7 @@ function checkButtonSize(warningBlock) {
 var _default = checkButtonSize;
 exports.default = _default;
 
-},{"../../services/graphService":25,"../errors/linterError":6,"../errors/warning":8}],20:[function(require,module,exports){
+},{"../../services/graphService":24,"../errors/linterError":6,"../errors/warning":8}],20:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3401,7 +3395,7 @@ var _sizes = require("../enums/sizes");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkPlaceholderSize(warningBlock) {
-  const placeholders = (0, _graphService.findRootBlocks)(warningBlock, 'placeholder');
+  const placeholders = (0, _graphService.findBlocksWithName)(warningBlock, 'placeholder');
 
   if (placeholders.length === 0) {
     return [];
@@ -3430,7 +3424,7 @@ function checkPlaceholderSize(warningBlock) {
 var _default = checkPlaceholderSize;
 exports.default = _default;
 
-},{"../../services/graphService":25,"../enums/sizes":4,"../errors/linterError":6,"../errors/warning":8}],22:[function(require,module,exports){
+},{"../../services/graphService":24,"../enums/sizes":4,"../errors/linterError":6,"../errors/warning":8}],22:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3447,7 +3441,7 @@ var _graphService = require("../../services/graphService");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkTextDifference(warningBlock) {
-  const textBlocks = (0, _graphService.findRootBlocks)(warningBlock, 'text');
+  const textBlocks = (0, _graphService.findBlocksWithName)(warningBlock, 'text');
   const textBlocksWithSize = textBlocks.filter(block => {
     if (!block.mods) {
       return false;
@@ -3483,7 +3477,7 @@ function checkTextDifference(warningBlock) {
 var _default = checkTextDifference;
 exports.default = _default;
 
-},{"../../services/graphService":25,"../errors/linterError":6,"../errors/warning":8}],23:[function(require,module,exports){
+},{"../../services/graphService":24,"../errors/linterError":6,"../errors/warning":8}],23:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3640,216 +3634,14 @@ exports.parseASTLocation = parseASTLocation;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.convertTreeToList = convertTreeToList;
-exports.getBlocks = getBlocks;
-exports.findBlocksIn = findBlocksIn;
-exports.findRootBlocksIn = findRootBlocksIn;
-exports.findBlock = findBlock;
-exports.findBlockWithMod = findBlockWithMod;
-exports.findAllBlocks = findAllBlocks;
-exports.findAllBlocksWithMod = findAllBlocksWithMod;
-exports.isBlock = void 0;
-
-var _jsonToAst = _interopRequireDefault(require("json-to-ast"));
-
-var _astService = require("./astService");
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-const isBlock = node => {
-  return node.content || node.block && !node.elem;
-};
-
-exports.isBlock = isBlock;
-
-function getMixedBlocksOf(node) {
-  const mixValue = node.mix;
-
-  if (!mixValue) {
-    return [];
-  }
-
-  let mixedNodes = [].concat(mixValue);
-  const mixedBlocks = mixedNodes.filter(mixin => isBlock(mixin));
-  return mixedBlocks;
-}
-
-function getChildBlocksIn(node) {
-  let nodeChildren = node;
-
-  if (!Array.isArray(node)) {
-    // Ищем контент объекта и забираем если есть
-    nodeChildren = node.content ? [].concat(node.content) : [];
-  }
-
-  const blocks = nodeChildren.filter(child => isBlock(child));
-  return [].concat(blocks);
-}
-
-function convertTreeToList(root) {
-  let stack = [],
-      array = [];
-  const rootIsArray = Array.isArray(root);
-
-  if (rootIsArray) {
-    stack.push(...root);
-  } else {
-    stack.push(root);
-  }
-
-  let depth = 0;
-  let isPreviousDeeper = false;
-
-  while (stack.length !== 0) {
-    let node = stack.shift();
-    node.depth = depth;
-    array.push(node);
-    const nodeMixins = getMixedBlocksOf(node).map(mixedBlock => {
-      return { ...mixedBlock,
-        depth: depth
-      };
-    });
-    array.push(...nodeMixins);
-    const nodeChildren = getChildBlocksIn(node);
-
-    if (nodeChildren.length === 0) {
-      if (isPreviousDeeper) {
-        depth--;
-        isPreviousDeeper = true;
-      }
-
-      continue;
-    } else {
-      isPreviousDeeper = false;
-      depth++;
-      stack.unshift(...nodeChildren);
-    }
-  }
-
-  return array;
-}
-
-function applyLocationsToBlock(block, astBlockRepresentation) {
-  const {
-    start,
-    end
-  } = astBlockRepresentation.loc;
-  const result = { ...block,
-    location: {
-      start,
-      end
-    }
-  };
-  const blockChildren = getChildBlocksIn(block);
-  const astChildren = (0, _astService.getChildASTBlocksIn)(astBlockRepresentation);
-  const childrenWithLocation = blockChildren.map((child, index) => {
-    const astChild = astChildren[index];
-    return applyLocationsToBlock(child, astChild);
-  });
-
-  if (blockChildren.length > 0) {
-    if (Array.isArray(result.content)) {
-      // Контент - массив
-      result.content = childrenWithLocation;
-    } else {
-      // Контент - объект
-      result.content = childrenWithLocation[0];
-    }
-  }
-
-  return result;
-}
-
-function getBlocksWithLocation(blocks, astBlocks) {
-  const blockWithLocation = blocks.map((block, index) => {
-    let result = block;
-    const astBlock = astBlocks[index];
-    return applyLocationsToBlock(result, astBlock);
-  });
-  return blockWithLocation;
-}
-
-function getBlocks(jsonString) {
-  if (jsonString.length === 0) {
-    return [];
-  }
-
-  let json = {};
-
-  try {
-    json = JSON.parse(jsonString);
-  } catch (e) {
-    console.error('Invalid JSON');
-    return [];
-  }
-
-  const blocksList = convertTreeToList(json);
-  const ast = (0, _jsonToAst.default)(jsonString);
-  const astBlocksList = (0, _astService.convertAstTreeToList)(ast);
-  console.log(blocksList.length, astBlocksList.length);
-  const blocksWithLocation = getBlocksWithLocation(blocksList, astBlocksList);
-  console.log(blocksWithLocation.length);
-  return blocksWithLocation;
-}
-
-function findBlocksIn(blocks, blockName) {
-  return blocks.filter(block => {
-    return block.block === blockName;
-  });
-}
-
-function findRootBlocksIn(blocks, rootBlockName) {
-  const gridNodes = findBlocksIn(blocks, rootBlockName);
-  return gridNodes.filter(node => {
-    return !node.elem;
-  });
-}
-
-function findBlock(list, blockName) {
-  return list.find(block => {
-    return block.block === blockName && !block.elem;
-  });
-}
-
-function findBlockWithMod(list, blockName, modName, modValue) {
-  return list.find(block => {
-    if (!block.mods) {
-      return false;
-    }
-
-    return block.block === blockName && !block.elem && block.mods[modName] === modValue;
-  });
-}
-
-function findAllBlocks(list, blockName) {
-  return list.filter(block => {
-    return block.block === blockName && !block.elem;
-  });
-}
-
-function findAllBlocksWithMod(list, blockName, modName, modValue) {
-  return list.filter(block => {
-    if (!block.mods) {
-      return false;
-    }
-
-    return block.block === blockName && !block.elem && block.mods[modName] === modValue;
-  });
-}
-
-},{"./astService":23,"json-to-ast":1}],25:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
 exports.getRoots = getRoots;
 exports.getGraphs = getGraphs;
-exports.findRootBlocks = findRootBlocks;
+exports.findNodeIn = findNodeIn;
+exports.findBlocksWithName = findBlocksWithName;
 exports.findRootBlocksWithModValue = findRootBlocksWithModValue;
 exports.findRootBlocksWithMod = findRootBlocksWithMod;
-exports.findPositionInvalidBlocks = findPositionInvalidBlocks;
-exports.findBlocksBefore = findBlocksBefore;
+exports.findAllElementsInBlock = findAllElementsInBlock;
+exports.findChildBlocksPlacedBeforeOtherBlocks = findChildBlocksPlacedBeforeOtherBlocks;
 
 var _astService = require("./astService");
 
@@ -3862,18 +3654,11 @@ function getRoots(json) {
 
   try {
     const parsedJSON = JSON.parse(json);
-    roots = Array.isArray(parsedJSON) ? [].concat(...parsedJSON) : [parsedJSON];
+    roots = Array.isArray(parsedJSON) ? parsedJSON.flat(Infinity) : [parsedJSON];
   } catch (error) {
     console.error('Invalid JSON: ', error);
-  } // Если в входящей строке в массиве находились другие массивы
+  }
 
-
-  roots.forEach((root, index) => {
-    while (Array.isArray(roots[index])) {
-      roots = roots.flat();
-    }
-  });
-  console.log('roots', roots);
   return roots;
 }
 
@@ -3922,85 +3707,161 @@ function applyServiceData(block, ASTBlock, depth = 0) {
   return result;
 }
 
-function findRootBlocks(rootNode, blockName) {
-  const nodeName = rootNode.block;
+function getContentArrayOf(node) {
+  let nodeContent = [];
 
-  if (nodeName === blockName) {
+  if (Array.isArray(node)) {
+    nodeContent = node;
+  } else {
+    nodeContent = node.content ? [].concat(node.content) : null;
+  }
+
+  return nodeContent;
+}
+/** 
+ * Возвращает массив объектов объектов, удовлетворяющих nodeRecognizer, найденных в дереве.
+ * 
+ * ВНИМАНИЕ: функция работает с расчётом на то, что в дереве одинаковые блоки не будут вложены друг в друга. В такой ситуации будет найден только блок на верхнем уровне, а внутренние будут пропущены.
+ * @param {(node: Object) => boolean} nodeRecognizer
+*/
+
+
+function findAllNodesIn(rootNode, nodeRecognizer = node => false) {
+  if (nodeRecognizer(rootNode)) {
     return [rootNode];
   }
 
-  const nodeContent = rootNode.content;
+  const nodeContent = getContentArrayOf(rootNode);
 
-  if (!nodeContent || nodeContent.length === 0) {
+  if (!nodeContent) {
     return [];
   }
 
-  const contentArr = [].concat(nodeContent);
-  const rootBlocks = contentArr.map(childNode => findRootBlocks(childNode, blockName));
-  return [].concat(...rootBlocks).filter(block => block);
+  const elements = nodeContent.map(childNode => findAllNodesIn(childNode, nodeRecognizer));
+  return elements.flat(Infinity);
 }
+/** 
+ * Возвращает объект первой попавшегося в дереве объекта, удовлетворяющего nodeRecognizer.
+ * @param {(node: Object) => boolean} nodeRecognizer
+*/
+
+
+function findNodeIn(rootNode, nodeRecognizer = node => false) {
+  if (nodeRecognizer(rootNode)) {
+    return rootNode;
+  }
+
+  const nodeContent = getContentArrayOf(rootNode);
+
+  if (!nodeContent) {
+    return null;
+  }
+
+  let foundNode = null; // Используем for, т.к. forEach нельзя остановить, когда нашли нужную нам ноду
+
+  for (let i = 0; i < nodeContent.length; i++) {
+    const nodeFoundInChildNode = findNodeIn(nodeContent[i], nodeRecognizer);
+
+    if (nodeFoundInChildNode) {
+      foundNode = nodeFoundInChildNode;
+      break;
+    }
+  }
+
+  return foundNode;
+}
+/** 
+ * Возвращает все блоки с именем blockName
+*/
+
+
+function findBlocksWithName(rootNode, blockName) {
+  const blockRecognizer = node => node.block === blockName;
+
+  return findAllNodesIn(rootNode, blockRecognizer);
+}
+/** 
+ * Возвращает все блоки с модификатором modName, имеющим значение modValue
+*/
+
 
 function findRootBlocksWithModValue(rootNode, blockName, modName, modValue) {
-  const rootBlocks = findRootBlocks(rootNode, blockName);
-  const rootBlocksWithModValue = rootBlocks.filter(block => {
-    if (!block.mods) {
-      return false;
-    }
+  const blockRecognizer = node => node.block === blockName && node.mods && node.mods[modName] === modValue;
 
-    return block.mods[modName] === modValue;
-  });
-  return rootBlocksWithModValue;
+  return findAllNodesIn(rootNode, blockRecognizer);
 }
+/** 
+ * Возвращает все блоки с модификатором modName
+*/
+
 
 function findRootBlocksWithMod(rootNode, blockName, modName) {
-  const rootBlocks = findRootBlocks(rootNode, blockName);
-  const rootBlocksWithMod = rootBlocks.filter(block => {
-    if (!block.mods) {
-      return false;
-    }
+  const blockRecognizer = node => node.block === blockName && node.mods && node.mods[modName];
 
-    return block.mods[modName];
-  });
-  return rootBlocksWithMod;
+  return findAllNodesIn(rootNode, blockRecognizer);
 }
+/** 
+ * Возвращает все элементы elemName в блоке
+*/
 
-function findPositionInvalidBlocks(rootNode, beforeBlockRecognizer, afterBlockRecognizer) {
-  const recognizedBlocks = [].concat(...findBlocksBefore(rootNode, beforeBlockRecognizer, afterBlockRecognizer));
+
+function findAllElementsInBlock(block, elemName) {
+  return findAllNodesIn(block, node => {
+    return node.elem === elemName;
+  });
+}
+/** 
+ * Возвращает массив дочерних для rootNode блоков, удовлетворяющих beforeBlockRecognizer и находящихся перед блоками, удовлетворяющими afterBlockRecognizer, на том же или более глубоком уровне вложенности.
+ * @param {(node: Object) => boolean} beforeBlockRecognizer Selector for the element
+ * @param {(node: Object) => boolean} afterBlockRecognizer Selector for the element
+*/
+
+
+function findChildBlocksPlacedBeforeOtherBlocks(rootNode, beforeBlockRecognizer, afterBlockRecognizer) {
+  if (afterBlockRecognizer(rootNode) || beforeBlockRecognizer(rootNode)) {
+    return [];
+  }
+
+  ;
+  const recognizedBlocks = flatArrayOfBeforeAndAfterBlocks(rootNode, beforeBlockRecognizer, afterBlockRecognizer);
   const beforeBlocks = recognizedBlocks.filter(block => beforeBlockRecognizer(block));
   const afterBlocks = recognizedBlocks.filter(block => afterBlockRecognizer(block));
-
-  if (afterBlocks.length > 0) {
-    let invalidBlocks = [];
-    afterBlocks.forEach(afterBlock => {
-      const temp = beforeBlocks.filter(beforeBlock => {
-        return recognizedBlocks.indexOf(beforeBlock) < recognizedBlocks.indexOf(afterBlock) && beforeBlock.depth <= afterBlock.depth;
-      });
-      invalidBlocks = [...invalidBlocks, ...temp];
+  let result = [];
+  afterBlocks.forEach(referenceBlock => {
+    const blocksBeforeReferenceBlock = beforeBlocks.filter(beforeBlock => {
+      return recognizedBlocks.indexOf(beforeBlock) < recognizedBlocks.indexOf(referenceBlock) && beforeBlock.depth <= referenceBlock.depth;
     });
-    return invalidBlocks;
-  }
-
-  return [];
+    result = [...result, ...blocksBeforeReferenceBlock];
+  });
+  return result;
 }
+/** 
+ * Возвращает массив блоков, удовлетворяющих beforeBlockRecognizer и afterBlockRecognizer и стоящих в порядке следования (как в структуре блока)
+ * @param {(node: Object) => boolean} beforeBlockRecognizer Selector for the element
+ * @param {(node: Object) => boolean} afterBlockRecognizer Selector for the element
+*/
 
-function findBlocksBefore(rootNode, beforeBlockRecognizer, afterBlockRecognizer, matchedBlocks = []) {
+
+function flatArrayOfBeforeAndAfterBlocks(rootNode, beforeBlockRecognizer, afterBlockRecognizer, matchedBlocks = []) {
   let result = matchedBlocks;
 
-  if (afterBlockRecognizer(rootNode)) {
-    return [...result, rootNode];
+  if (Array.isArray(rootNode)) {
+    result = rootNode.map(child => flatArrayOfBeforeAndAfterBlocks(child, beforeBlockRecognizer, afterBlockRecognizer, matchedBlocks));
+  } else {
+    if (afterBlockRecognizer(rootNode) || beforeBlockRecognizer(rootNode)) {
+      return [...result, rootNode];
+    }
+
+    const nodeContent = rootNode.content ? [].concat(rootNode.content) : [];
+
+    if (nodeContent.length === 0) {
+      return result;
+    }
+
+    result = nodeContent.map(child => flatArrayOfBeforeAndAfterBlocks(child, beforeBlockRecognizer, afterBlockRecognizer, result));
   }
 
-  if (beforeBlockRecognizer(rootNode)) {
-    result = [...result, rootNode];
-  }
-
-  const nodeContent = rootNode.content ? [].concat(rootNode.content) : [];
-
-  if (nodeContent.length === 0) {
-    return result;
-  }
-
-  return [].concat(...nodeContent.map(child => findBlocksBefore(child, beforeBlockRecognizer, afterBlockRecognizer, result)));
+  return result.flat(Infinity);
 }
 
 },{"./astService":23}]},{},[2]);
