@@ -6,6 +6,20 @@ const testInputs = [
     json: `{
       "block": "warning",
       "content": [
+        [
+          [
+            { "block": "button", "mods": { "size": "m" } },
+            { "block": "placeholder", "mods": { "size": "m" } }
+          ]
+        ]
+      ]
+    }`,
+    expectedErrors: 1
+  },
+  {
+    json: `{
+      "block": "warning",
+      "content": [
           { "block": "button", "mods": { "size": "m" } },
           { "block": "placeholder", "mods": { "size": "m" } }
       ]

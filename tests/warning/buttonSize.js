@@ -18,6 +18,17 @@ const testInputs = [
       "content": [
           { "block": "text", "mods": { "size": "l" } },
           { "block": "button", "mods": { "size": "s" } },
+          { "block": "button" }
+      ]
+    }`,
+    expectedErrors: 2
+  },
+  {
+    json: `{
+      "block": "warning",
+      "content": [
+          { "block": "text", "mods": { "size": "l" } },
+          { "block": "button", "mods": { "size": "s" } },
           { "block": "button", "mods": { "size": "m" } }
       ]
     }`,

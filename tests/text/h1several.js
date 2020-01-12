@@ -8,23 +8,23 @@ const testInputs = [
     json: `[
       [
         [
-        {
-          "block": "page",
-          "content": [
-            {
-              "block": "text",
-              "mods": {
-                "type": "h1"
+          {
+            "block": "page",
+            "content": [
+              {
+                "block": "text",
+                "mods": {
+                  "type": "h1"
+                }
+              },
+              {
+                "block": "text",
+                "mods": {
+                  "type": "h1"
+                }
               }
-            },
-            {
-              "block": "text",
-              "mods": {
-                "type": "h1"
-              }
-            }
-          ]
-        }
+            ]
+          }
         ]
       ]
     ]`,

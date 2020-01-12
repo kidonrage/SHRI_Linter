@@ -14,6 +14,9 @@ const testInputs = [
           "elem": "content",
           "content": [
             {
+              "block": "text"
+            },
+            {
                 "block": "text",
                 "mods": { "size": "m" }
             },
@@ -32,7 +35,7 @@ const testInputs = [
         }
       ]
     }`,
-    expectedErrors: 1,
+    expectedErrors: 2,
   },
   {
     json: `{
