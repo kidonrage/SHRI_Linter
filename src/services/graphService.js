@@ -168,3 +168,51 @@ export function findBlocksBefore(rootNode, beforeBlockRecognizer, afterBlockReco
 
   return [].concat(...nodeContent.map(child => findBlocksBefore(child, beforeBlockRecognizer, afterBlockRecognizer, result)));
 }
+
+export function findAllElementsInBlock(block, elemName) {
+  const blockElementName = block.elem;
+
+  if (blockElementName === elemName) {
+    return [block]
+  }
+
+  const blockContent = block.content;
+
+  if (!blockContent || blockContent.length === 0) {
+    return [];
+  }
+
+  const contentArr = [].concat(blockContent);
+
+  const elements = contentArr.map(childNode => findAllElementsInBlock(childNode, elemName));
+
+  return [].concat(...elements);
+}
+
+export function findNodeIn(rootNode, nodeRecognizer = (node) => false) {
+  if (nodeRecognizer(rootNode)) {
+    return rootNode;
+  }
+
+  const nodeContent = rootNode.content;
+
+  if (!nodeContent || nodeContent.length === 0) {
+    return null;
+  }
+
+  const contentArr = [].concat(nodeContent);
+
+  let foundNode = null;
+  
+  contentArr.forEach(childNode => {
+    const nodeFoundInChildNode = findNodeIn(childNode, nodeRecognizer);
+
+    if (!nodeFoundInChildNode || foundNode) {
+      return;
+    }
+
+    foundNode = nodeFoundInChildNode;
+  });
+
+  return foundNode;
+}

@@ -1,4 +1,3 @@
-import {findBlocksIn, findRootBlocksIn} from '../services/blocksService';
 import {findRootBlocks} from '../services/graphService';
 import warningCheckers from './warning';
 import textCheckers from './text';

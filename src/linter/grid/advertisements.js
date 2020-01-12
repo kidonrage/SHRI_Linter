@@ -1,40 +1,33 @@
 import LinterError from '../errors/linterError';
 import gridErrors from '../errors/grid';
-import {convertTreeToList} from '../../services/blocksService';
-import {infoFuncTional, marketing} from '../enums/contentBlocks';
+import {findAllElementsInBlock, findNodeIn} from '../../services/graphService';
+import {marketing} from '../enums/contentBlocks';
 
 function checkAds(gridBlock) {
 
   const columnsCount = parseInt(gridBlock.mods['m-columns'], 10);
 
-  const columnBlocks = convertTreeToList(gridBlock).filter(child => child.elem === 'fraction');
+  const columnBlocks = findAllElementsInBlock(gridBlock, 'fraction');
 
-  const childBlocks = columnBlocks.map(column => {
-
+  const marketingBlocks = columnBlocks.map(column => {
     const columnSize = parseInt(column.elemMods['m-col'], 10);
 
-    let isMarketing = false;
+    const marketingNode = findNodeIn(column, (node) => {
+      const nodeBlockName = node.block;
 
-    const columnNodesList = convertTreeToList(column);
+      return marketing.includes(nodeBlockName);
+    })
 
-    const block = columnNodesList.find((node) => {
-      isMarketing = false; 
+    if (!marketingNode) {
+      return null;
+    }
 
-      if (marketing.includes(node.block)) {
-        isMarketing = true
-      }
-
-      return isMarketing || infoFuncTional.includes(node.block);
-    });
-     
     return {
-      ...block,
-      isMarketing,
+      ...marketingNode,
       sizeInColumns: columnSize
     }
-  });
+  }).filter(node => node);
 
-  const marketingBlocks = childBlocks.filter(block => block.isMarketing);
   const marketingColumnsCount = marketingBlocks.map(block => block.sizeInColumns);
 
   const isGridValid = marketingColumnsCount / columnsCount < 0.5;
