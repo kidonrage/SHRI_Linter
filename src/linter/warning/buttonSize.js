@@ -1,6 +1,6 @@
 import LinterError from '../errors/linterError';
 import warningErrors from '../errors/warning';
-import {findRootBlocksWithName} from '../../services/nodeSearchService';
+import {findRootBlocksWithName, findRootBlocksWithMod} from '../../services/nodeSearchService';
 
 const isButtonSizeValid = (buttonSize, referenceSize) => {
   let properButtonSize = '';
@@ -27,50 +27,27 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
 
 function checkButtonSize(warningBlock) {
   const buttons = findRootBlocksWithName(warningBlock, 'button');
-  const textBlocks = findRootBlocksWithName(warningBlock, 'text');
+  const textBlocks = findRootBlocksWithMod(warningBlock, 'text', 'size');
 
-  if (textBlocks.length < 1 || buttons.length < 1) {
+  const textSizes = textBlocks.map((block) => {
+    return block.mods.size;
+  })
+
+  if (!textSizes.length || !buttons.length) {
     return [];
   }
-  
-  const textBlocksWithSize = textBlocks.filter(block => {
-    if (!block.mods) {
-      return false
-    }
-
-    return block.mods.size;
-  })
-
-  const textSizes = textBlocksWithSize.map((block) => {
-    return block.mods.size;
-  })
 
   const referenceSize = textSizes[0];
 
-  const invalidButtons = buttons.filter((button) => {
-    if (!button.mods) {
-      return true;
-    }
-
-    return !isButtonSizeValid(button.mods.size, referenceSize);
-  });
+  const invalidButtons = buttons.filter(button => button.mods ? !isButtonSizeValid(button.mods.size, referenceSize) : true);
 
   const isSizesValid = invalidButtons.length === 0;
 
-  if (!isSizesValid) {
-    const errors = invalidButtons.map((button) => {
-      const error = new LinterError(
-        warningErrors.buttonSize,
-        button
-      )
-    
-      return error;
-    });
-  
-    return errors;
+  if (isSizesValid) {
+    return [];
   }
 
-  return [];
+  return LinterError.getErrorsForBlocks(warningErrors.buttonSize, invalidButtons);
 }
 
 export default checkButtonSize;

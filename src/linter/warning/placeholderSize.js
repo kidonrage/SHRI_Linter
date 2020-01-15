@@ -6,34 +6,15 @@ import {placeholderSizes} from '../enums/sizes';
 function checkPlaceholderSize(warningBlock) {
   const placeholders = findRootBlocksWithName(warningBlock, 'placeholder');
 
-  if (placeholders.length === 0) {
-    return []
-  }
-
-  const invalidPlaceholders = placeholders.filter((placeholder) => {
-    if (!placeholder.mods) {
-      return true;
-    }
-
-    return !placeholderSizes.includes(placeholder.mods.size);
-  })
+  const invalidPlaceholders = placeholders.filter(placeholder => placeholder.mods ? !placeholderSizes.includes(placeholder.mods.size) : true);
 
   const isPlaceholdersValid = invalidPlaceholders.length === 0;
 
-  if (!isPlaceholdersValid) {
-    const errors = invalidPlaceholders.map((invalidPlaceholder) => {
-      const error = new LinterError(
-        warningErrors.placeholderSize,
-        invalidPlaceholder
-      )
-    
-      return error;
-    });
-  
-    return errors;
+  if (isPlaceholdersValid) {
+    return [];
   }
 
-  return [];
+  return LinterError.getErrorsForBlocks(warningErrors.placeholderSize, invalidPlaceholders);
 }
 
 export default checkPlaceholderSize;

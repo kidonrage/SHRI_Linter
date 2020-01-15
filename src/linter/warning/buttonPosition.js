@@ -15,20 +15,11 @@ function checkButtonPosition(warningBlock) {
 
   const isButtonsValid = invalidButtons.length === 0;
   
-  if (!isButtonsValid) {
-    const errors = invalidButtons.map((invalidButton) => {
-      const error = new LinterError(
-        warningErrors.buttonPosition,
-        invalidButton
-      )
-    
-      return error;
-    })
-
-    return errors;
+  if (isButtonsValid) {
+    return [];
   }
 
-  return [];
+  return LinterError.getErrorsForBlocks(warningErrors.buttonPosition, invalidButtons);
 }
 
 export default checkButtonPosition;

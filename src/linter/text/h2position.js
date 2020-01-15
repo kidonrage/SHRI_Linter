@@ -8,20 +8,11 @@ function checkH2Position(rootNode) {
 
   const isPositionValid = invalidH2Headers.length === 0;
   
-  if (!isPositionValid) {
-    const errors = invalidH2Headers.map((invalidHeader) => {
-      const error = new LinterError(
-        textErrors.h2Position,
-        invalidHeader
-      );
-    
-      return error;
-    })
-
-    return errors;
+  if (isPositionValid) {
+    return [];
   }
 
-  return [];
+  return LinterError.getErrorsForBlocks(textErrors.h2Position, invalidH2Headers);
 }
 
 export default checkH2Position;

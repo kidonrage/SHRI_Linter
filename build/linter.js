@@ -2837,6 +2837,13 @@ class LinterError {
     this.location = errorBlock.location;
   }
 
+  static getErrorsForBlocks(errorInfo, errorBlocksArr) {
+    return errorBlocksArr.map(errorBlock => {
+      const error = new LinterError(errorInfo, errorBlock);
+      return error;
+    });
+  }
+
 }
 
 exports.default = LinterError;
@@ -2916,30 +2923,29 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function checkAds(gridBlock) {
   const columnsCount = parseInt(gridBlock.mods['m-columns'], 10);
   const columnBlocks = (0, _nodeSearchService.findAllElementsInBlock)(gridBlock, 'fraction');
-  const marketingBlocks = columnBlocks.map(column => {
+  const marketingBlocks = [];
+  columnBlocks.forEach(column => {
     const columnSize = parseInt(column.elemMods['m-col'], 10);
     const marketingNode = (0, _nodeService.findNodeIn)(column, node => {
       const nodeBlockName = node.block;
       return _contentBlocks.marketing.includes(nodeBlockName);
     });
 
-    if (!marketingNode) {
-      return null;
+    if (marketingNode) {
+      marketingBlocks.push({ ...marketingNode,
+        sizeInColumns: columnSize
+      });
     }
-
-    return { ...marketingNode,
-      sizeInColumns: columnSize
-    };
-  }).filter(node => node);
-  const marketingColumnsCount = marketingBlocks.map(block => block.sizeInColumns);
+  });
+  const marketingColumnsSizes = marketingBlocks.map(block => block.sizeInColumns);
+  const marketingColumnsCount = marketingColumnsSizes.reduce((prevValue, currentValue) => prevValue + currentValue, 0);
   const isGridValid = marketingColumnsCount / columnsCount < 0.5;
 
-  if (!isGridValid) {
-    const error = new _linterError.default(_grid.default.advertisements, gridBlock);
-    return error;
+  if (isGridValid) {
+    return null;
   }
 
-  return null;
+  return new _linterError.default(_grid.default.advertisements, gridBlock);
 }
 
 var _default = checkAds;
@@ -3078,23 +3084,14 @@ var _nodeSearchService = require("../../services/nodeSearchService");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkH1Severalty(rootNode) {
-  const h1Headers = (0, _nodeSearchService.findBlocksWithModValue)(rootNode, 'text', 'type', 'h1');
+  const h1Headers = (0, _nodeSearchService.findRootBlocksWithModValue)(rootNode, 'text', 'type', 'h1');
+  const isHeadersValid = h1Headers.length < 2;
 
-  if (h1Headers.length < 1) {
+  if (isHeadersValid) {
     return [];
   }
 
-  const isHeadersValid = h1Headers.length === 1;
-
-  if (!isHeadersValid) {
-    const errors = h1Headers.slice(1).map(invalidHeader => {
-      const error = new _linterError.default(_text.default.severalH1, invalidHeader);
-      return error;
-    });
-    return errors;
-  }
-
-  return [];
+  return _linterError.default.getErrorsForBlocks(_text.default.severalH1, h1Headers.slice(1));
 }
 
 var _default = checkH1Severalty;
@@ -3122,15 +3119,11 @@ function checkH2Position(rootNode) {
   const invalidH2Headers = (0, _nodeSearchService.findChildBlocksPlacedBeforeOtherBlocks)(rootNode, _recognizers.h2HeaderRecognizer, _recognizers.h1HeaderRecognizer);
   const isPositionValid = invalidH2Headers.length === 0;
 
-  if (!isPositionValid) {
-    const errors = invalidH2Headers.map(invalidHeader => {
-      const error = new _linterError.default(_text.default.h2Position, invalidHeader);
-      return error;
-    });
-    return errors;
+  if (isPositionValid) {
+    return [];
   }
 
-  return [];
+  return _linterError.default.getErrorsForBlocks(_text.default.h2Position, invalidH2Headers);
 }
 
 var _default = checkH2Position;
@@ -3158,15 +3151,11 @@ function checkH3Position(rootNode) {
   const invalidH3Headers = (0, _nodeSearchService.findChildBlocksPlacedBeforeOtherBlocks)(rootNode, _recognizers.h3HeaderRecognizer, _recognizers.h2HeaderRecognizer);
   const isPositionValid = invalidH3Headers.length === 0;
 
-  if (!isPositionValid) {
-    const errors = invalidH3Headers.map(invalidHeader => {
-      const error = new _linterError.default(_text.default.h3Position, invalidHeader);
-      return error;
-    });
-    return errors;
+  if (isPositionValid) {
+    return [];
   }
 
-  return [];
+  return _linterError.default.getErrorsForBlocks(_text.default.h3Position, invalidH3Headers);
 }
 
 var _default = checkH3Position;
@@ -3241,15 +3230,11 @@ function checkButtonPosition(warningBlock) {
   const invalidButtons = (0, _nodeSearchService.findChildBlocksPlacedBeforeOtherBlocks)(warningBlock, buttonRecognizer, placeholderRecognizer);
   const isButtonsValid = invalidButtons.length === 0;
 
-  if (!isButtonsValid) {
-    const errors = invalidButtons.map(invalidButton => {
-      const error = new _linterError.default(_warning.default.buttonPosition, invalidButton);
-      return error;
-    });
-    return errors;
+  if (isButtonsValid) {
+    return [];
   }
 
-  return [];
+  return _linterError.default.getErrorsForBlocks(_warning.default.buttonPosition, invalidButtons);
 }
 
 var _default = checkButtonPosition;
@@ -3300,41 +3285,24 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
 
 function checkButtonSize(warningBlock) {
   const buttons = (0, _nodeSearchService.findRootBlocksWithName)(warningBlock, 'button');
-  const textBlocks = (0, _nodeSearchService.findRootBlocksWithName)(warningBlock, 'text');
+  const textBlocks = (0, _nodeSearchService.findRootBlocksWithMod)(warningBlock, 'text', 'size');
+  const textSizes = textBlocks.map(block => {
+    return block.mods.size;
+  });
 
-  if (textBlocks.length < 1 || buttons.length < 1) {
+  if (!textSizes.length || !buttons.length) {
     return [];
   }
 
-  const textBlocksWithSize = textBlocks.filter(block => {
-    if (!block.mods) {
-      return false;
-    }
-
-    return block.mods.size;
-  });
-  const textSizes = textBlocksWithSize.map(block => {
-    return block.mods.size;
-  });
   const referenceSize = textSizes[0];
-  const invalidButtons = buttons.filter(button => {
-    if (!button.mods) {
-      return true;
-    }
-
-    return !isButtonSizeValid(button.mods.size, referenceSize);
-  });
+  const invalidButtons = buttons.filter(button => button.mods ? !isButtonSizeValid(button.mods.size, referenceSize) : true);
   const isSizesValid = invalidButtons.length === 0;
 
-  if (!isSizesValid) {
-    const errors = invalidButtons.map(button => {
-      const error = new _linterError.default(_warning.default.buttonSize, button);
-      return error;
-    });
-    return errors;
+  if (isSizesValid) {
+    return [];
   }
 
-  return [];
+  return _linterError.default.getErrorsForBlocks(_warning.default.buttonSize, invalidButtons);
 }
 
 var _default = checkButtonSize;
@@ -3387,29 +3355,14 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function checkPlaceholderSize(warningBlock) {
   const placeholders = (0, _nodeSearchService.findRootBlocksWithName)(warningBlock, 'placeholder');
+  const invalidPlaceholders = placeholders.filter(placeholder => placeholder.mods ? !_sizes.placeholderSizes.includes(placeholder.mods.size) : true);
+  const isPlaceholdersValid = invalidPlaceholders.length === 0;
 
-  if (placeholders.length === 0) {
+  if (isPlaceholdersValid) {
     return [];
   }
 
-  const invalidPlaceholders = placeholders.filter(placeholder => {
-    if (!placeholder.mods) {
-      return true;
-    }
-
-    return !_sizes.placeholderSizes.includes(placeholder.mods.size);
-  });
-  const isPlaceholdersValid = invalidPlaceholders.length === 0;
-
-  if (!isPlaceholdersValid) {
-    const errors = invalidPlaceholders.map(invalidPlaceholder => {
-      const error = new _linterError.default(_warning.default.placeholderSize, invalidPlaceholder);
-      return error;
-    });
-    return errors;
-  }
-
-  return [];
+  return _linterError.default.getErrorsForBlocks(_warning.default.placeholderSize, invalidPlaceholders);
 }
 
 var _default = checkPlaceholderSize;
@@ -3433,36 +3386,24 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function checkTextDifference(warningBlock) {
   const textBlocks = (0, _nodeSearchService.findRootBlocksWithName)(warningBlock, 'text');
-  const textBlocksWithSize = textBlocks.filter(block => {
-    if (!block.mods) {
-      return false;
-    }
+  const textBlocksWithSize = textBlocks.filter(block => block.mods && block.mods.size);
+  const textSizes = textBlocksWithSize.map(block => block.mods.size);
 
-    return block.mods.size;
-  }); // Если в блоке нет текста
-
-  if (textBlocks.length === 0) {
+  if (!textSizes.length) {
     return [];
   }
 
-  const textSizes = textBlocksWithSize.map(block => {
-    return block.mods.size;
-  });
   const referenceSize = textSizes[0];
   const invalidBlocks = textBlocks.filter(block => {
     return !block.mods || block.mods.size !== referenceSize;
   });
   const isSizesEqual = invalidBlocks.length === 0;
 
-  if (!isSizesEqual) {
-    const errors = invalidBlocks.map(invalidSize => {
-      const error = new _linterError.default(_warning.default.textSize, warningBlock);
-      return error;
-    });
-    return errors;
+  if (isSizesEqual) {
+    return [];
   }
 
-  return [];
+  return _linterError.default.getErrorsForBlocks(_warning.default.textSize, invalidBlocks);
 }
 
 var _default = checkTextDifference;

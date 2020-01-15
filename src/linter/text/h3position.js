@@ -8,20 +8,11 @@ function checkH3Position(rootNode) {
   
   const isPositionValid = invalidH3Headers.length === 0;
   
-  if (!isPositionValid) {
-    const errors = invalidH3Headers.map((invalidHeader) => {
-      const error = new LinterError(
-        textErrors.h3Position,
-        invalidHeader
-      );
-    
-      return error;
-    })
-
-    return errors;
+  if (isPositionValid) {
+    return [];
   }
 
-  return [];
+  return LinterError.getErrorsForBlocks(textErrors.h3Position, invalidH3Headers);
 }
 
 export default checkH3Position;

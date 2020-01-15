@@ -4,23 +4,12 @@ import {findRootBlocksWithName} from '../../services/nodeSearchService';
 
 function checkTextDifference(warningBlock) {
   const textBlocks = findRootBlocksWithName(warningBlock, 'text');
+  const textBlocksWithSize = textBlocks.filter(block => block.mods && block.mods.size);
+  const textSizes = textBlocksWithSize.map(block => block.mods.size);
 
-  const textBlocksWithSize = textBlocks.filter(block => {
-    if (!block.mods) {
-      return false
-    }
-
-    return block.mods.size;
-  })
-  
-  // Если в блоке нет текста
-  if (textBlocks.length === 0) {
+  if (!textSizes.length) {
     return [];
   }
-
-  const textSizes = textBlocksWithSize.map((block) => {
-    return block.mods.size;
-  })
 
   const referenceSize = textSizes[0];
 
@@ -30,20 +19,11 @@ function checkTextDifference(warningBlock) {
 
   const isSizesEqual = invalidBlocks.length === 0;
 
-  if (!isSizesEqual) {
-    const errors = invalidBlocks.map((invalidSize) => {
-      const error = new LinterError(
-        warningErrors.textSize,
-        warningBlock
-      );
-    
-      return error;
-    });
-  
-    return errors;
+  if (isSizesEqual) {
+    return []
   }
 
-  return [];
+  return LinterError.getErrorsForBlocks(warningErrors.textSize, invalidBlocks);
 }
 
 export default checkTextDifference;

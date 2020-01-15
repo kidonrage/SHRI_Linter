@@ -8,4 +8,15 @@ export default class LinterError {
     this.location = errorBlock.location;
   }
 
+  static getErrorsForBlocks(errorInfo, errorBlocksArr){
+    return errorBlocksArr.map((errorBlock) => {
+      const error = new LinterError(
+        errorInfo,
+        errorBlock
+      );
+    
+      return error;
+    })
+  }
+
 }
