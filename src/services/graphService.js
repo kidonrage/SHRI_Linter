@@ -1,12 +1,10 @@
-/**
- * Функция, принимающая на вход объект и возвращающая true, когда он соответствует требованиям, определенным в теле функции, и false в обратном случае
- *
- * @callback recognizerFunction
- * @param {Object} node
- * @returns {boolean}
- */
-
 import {getASTRoots, getASTContent, parseASTLocation} from './astService';
+
+const isBlock = (node) => node.block && !node.elem;
+
+const recognizer = (blockName, modName, modValue, ...[props]) => {
+  
+}
 
 export function getRoots(json) {
   if (json.length === 0) {
@@ -166,10 +164,19 @@ export function findNodeIn(rootNode, nodeRecognizer = (node) => false) {
 }
 
 /** 
- * Возвращает все блоки с именем blockName
+ * Возвращает все корневые блоки с именем blockName
 */
 export function findRootBlocksWithName(rootNode, blockName) {
   const blockRecognizer = (node) => node.block === blockName;
+
+  return findAllRootNodesIn(rootNode, blockRecognizer);
+}
+
+/** 
+ * Возвращает все блоки с именем blockName
+*/
+export function findBlocksWithName(rootNode, blockName) {
+  const blockRecognizer = (node) => isBlock(node) && (node.block === blockName);
 
   return findAllRootNodesIn(rootNode, blockRecognizer);
 }
