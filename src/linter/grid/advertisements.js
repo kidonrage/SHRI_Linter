@@ -1,6 +1,7 @@
 import LinterError from '../errors/linterError';
 import gridErrors from '../errors/grid';
-import {findAllElementsInBlock, findNodeIn} from '../../services/graphService';
+import {findAllElementsInBlock} from '../../services/nodeSearchService';
+import {findNodeIn} from '../../services/nodeService';
 import {marketing} from '../enums/contentBlocks';
 
 function checkAds(gridBlock) {

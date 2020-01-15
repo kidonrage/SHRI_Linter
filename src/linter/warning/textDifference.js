@@ -1,6 +1,6 @@
 import LinterError from '../errors/linterError';
 import warningErrors from '../errors/warning';
-import {findRootBlocksWithName} from '../../services/graphService';
+import {findRootBlocksWithName} from '../../services/nodeSearchService';
 
 function checkTextDifference(warningBlock) {
   const textBlocks = findRootBlocksWithName(warningBlock, 'text');

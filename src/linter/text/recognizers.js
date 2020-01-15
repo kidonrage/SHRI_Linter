@@ -1,11 +1,5 @@
-const textModRecognizer = (block, modName, modValue) => {
-  if (!block.mods) {
-    return false;
-  }
+import {nodeRecognizer} from '../../services/nodeService';
 
-  return block.block === 'text' && block.mods[modName] === modValue
-}
-
-export const h1HeaderRecognizer = (block) => textModRecognizer(block, 'type', 'h1');
-export const h2HeaderRecognizer = (block) => textModRecognizer(block, 'type', 'h2');
-export const h3HeaderRecognizer = (block) => textModRecognizer(block, 'type', 'h3');
+export const h1HeaderRecognizer = nodeRecognizer('text', 'type', 'h1');
+export const h2HeaderRecognizer = nodeRecognizer('text', 'type', 'h2'); 
+export const h3HeaderRecognizer = nodeRecognizer('text', 'type', 'h3');

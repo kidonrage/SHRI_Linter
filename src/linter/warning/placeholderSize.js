@@ -1,6 +1,6 @@
 import LinterError from '../errors/linterError';
 import warningErrors from '../errors/warning';
-import {findRootBlocksWithName} from '../../services/graphService';
+import {findRootBlocksWithName} from '../../services/nodeSearchService';
 import {placeholderSizes} from '../enums/sizes';
 
 function checkPlaceholderSize(warningBlock) {

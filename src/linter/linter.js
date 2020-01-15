@@ -1,4 +1,4 @@
-import {findRootBlocksWithName} from '../services/graphService';
+import {findRootBlocksWithName} from '../services/nodeSearchService';
 import warningCheckers from './warning';
 import textCheckers from './text';
 import gridCheckers from './grid';
@@ -17,17 +17,17 @@ export default class Linter {
     this.blocksToCheck = configuration.blocks;
   }
 
-  lint(graphs) {
-    if (graphs.length < 1) {
+  lint(rootNodes) {
+    if (rootNodes.length < 1) {
       return [];
     }
 
-    const errors = graphs.map(rootGraph => {
-      const graphErrors = this.blocksToCheck.map((blockName) => {
-        return this[blockName](rootGraph)
+    const errors = rootNodes.map(rootNode => {
+      const nodeErrors = this.blocksToCheck.map((blockName) => {
+        return this[blockName](rootNode)
       })
 
-      return [].concat(...graphErrors)
+      return [].concat(...nodeErrors)
     })
 
     // 2d blocks errors array to 1d
@@ -36,10 +36,10 @@ export default class Linter {
     return flatErrors;
   }
 
-  warning(graph) {
+  warning(rootNode) {
     const {textDifference, buttonSize, buttonPosition, placeholderSize} = warningCheckers;
 
-    const warningBlocks = findRootBlocksWithName(graph, 'warning');
+    const warningBlocks = findRootBlocksWithName(rootNode, 'warning');
 
     const errors = warningBlocks.map((block) => {
       const blockErrors = [
@@ -55,22 +55,22 @@ export default class Linter {
     return [].concat(...errors);
   }
 
-  text(graph) {
+  text(rootNode) {
     const {h1Severalty, h2Position, h3Position} = textCheckers;
 
     const errors = [
-      ...h1Severalty(graph),
-      ...h2Position(graph),
-      ...h3Position(graph)
+      ...h1Severalty(rootNode),
+      ...h2Position(rootNode),
+      ...h3Position(rootNode)
     ]
 
     return errors;
   }
 
-  grid(graph) {
+  grid(rootNode) {
     const {advertisements} = gridCheckers;
 
-    const blocksToCheck = findRootBlocksWithName(graph, 'grid');
+    const blocksToCheck = findRootBlocksWithName(rootNode, 'grid');
 
     const errors = blocksToCheck.map((block) => {
       return [

@@ -1,13 +1,13 @@
 import Linter from './linter';
-import {getGraphs} from './services/graphService';
+import {getRootNodesFromJSON} from './services/jsonService';
 
 export default function lint(jsonString) {
   const linter = new Linter();
 
-  const rootGraphs = getGraphs(jsonString);
+  const rootNodes = getRootNodesFromJSON(jsonString);
   
-  const errors = linter.lint(rootGraphs);
-
+  const errors = linter.lint(rootNodes);
+  
   console.log('RESULT', errors);
 
   return errors;

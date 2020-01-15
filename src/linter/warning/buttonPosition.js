@@ -1,6 +1,6 @@
 import LinterError from '../errors/linterError';
 import warningErrors from '../errors/warning';
-import {findChildBlocksPlacedBeforeOtherBlocks} from '../../services/graphService';
+import {findChildBlocksPlacedBeforeOtherBlocks} from '../../services/nodeSearchService';
 
 const buttonRecognizer = (block) => {
   return block.block === 'button'

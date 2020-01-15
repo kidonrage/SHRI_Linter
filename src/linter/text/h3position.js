@@ -1,10 +1,10 @@
 import LinterError from '../errors/linterError';
 import textErrors from '../errors/text';
 import {h2HeaderRecognizer, h3HeaderRecognizer} from './recognizers';
-import {findChildBlocksPlacedBeforeOtherBlocks} from '../../services/graphService';
+import {findChildBlocksPlacedBeforeOtherBlocks} from '../../services/nodeSearchService';
 
-function checkH3Position(graph) {
-  const invalidH3Headers = findChildBlocksPlacedBeforeOtherBlocks(graph, h3HeaderRecognizer, h2HeaderRecognizer);
+function checkH3Position(rootNode) {
+  const invalidH3Headers = findChildBlocksPlacedBeforeOtherBlocks(rootNode, h3HeaderRecognizer, h2HeaderRecognizer);
   
   const isPositionValid = invalidH3Headers.length === 0;
   
