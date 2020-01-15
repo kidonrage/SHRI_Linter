@@ -3026,7 +3026,7 @@ class Linter {
       buttonPosition,
       placeholderSize
     } = _warning.default;
-    const warningBlocks = (0, _graphService.findBlocksWithName)(graph, 'warning');
+    const warningBlocks = (0, _graphService.findRootBlocksWithName)(graph, 'warning');
     const errors = warningBlocks.map(block => {
       const blockErrors = [...textDifference(block), ...buttonSize(block), ...buttonPosition(block), ...placeholderSize(block)];
       return blockErrors;
@@ -3048,7 +3048,7 @@ class Linter {
     const {
       advertisements
     } = _grid.default;
-    const blocksToCheck = (0, _graphService.findBlocksWithName)(graph, 'grid');
+    const blocksToCheck = (0, _graphService.findRootBlocksWithName)(graph, 'grid');
     const errors = blocksToCheck.map(block => {
       return [advertisements(block)];
     });
@@ -3308,8 +3308,8 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
 };
 
 function checkButtonSize(warningBlock) {
-  const buttons = (0, _graphService.findBlocksWithName)(warningBlock, 'button');
-  const textBlocks = (0, _graphService.findBlocksWithName)(warningBlock, 'text');
+  const buttons = (0, _graphService.findRootBlocksWithName)(warningBlock, 'button');
+  const textBlocks = (0, _graphService.findRootBlocksWithName)(warningBlock, 'text');
 
   if (textBlocks.length < 1 || buttons.length < 1) {
     return [];
@@ -3395,7 +3395,7 @@ var _sizes = require("../enums/sizes");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkPlaceholderSize(warningBlock) {
-  const placeholders = (0, _graphService.findBlocksWithName)(warningBlock, 'placeholder');
+  const placeholders = (0, _graphService.findRootBlocksWithName)(warningBlock, 'placeholder');
 
   if (placeholders.length === 0) {
     return [];
@@ -3441,7 +3441,7 @@ var _graphService = require("../../services/graphService");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkTextDifference(warningBlock) {
-  const textBlocks = (0, _graphService.findBlocksWithName)(warningBlock, 'text');
+  const textBlocks = (0, _graphService.findRootBlocksWithName)(warningBlock, 'text');
   const textBlocksWithSize = textBlocks.filter(block => {
     if (!block.mods) {
       return false;
@@ -3483,8 +3483,6 @@ exports.default = _default;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getChildASTBlocksIn = getChildASTBlocksIn;
-exports.convertAstTreeToList = convertAstTreeToList;
 exports.getASTContent = getASTContent;
 exports.getASTRoots = getASTRoots;
 exports.parseASTLocation = void 0;
@@ -3524,55 +3522,6 @@ function getMixedASTBlocksOf(node) {
     return isBlock(mixin);
   });
   return mixedBlocks;
-}
-
-function getChildASTBlocksIn(node) {
-  let childNodes = [];
-
-  if (node.type === 'Array') {
-    childNodes = [].concat(node.children);
-  } else {
-    const contentProperty = findPropertyIn(node, 'content');
-
-    if (contentProperty) {
-      const contentValue = contentProperty.value.type === 'Array' ? contentProperty.value.children : contentProperty.value;
-      childNodes = [].concat(contentValue);
-    }
-  }
-
-  const childBlocks = childNodes.filter(node => {
-    return isBlock(node);
-  });
-  return childBlocks;
-}
-
-function convertAstTreeToList(root) {
-  let stack = [],
-      array = []; // Root - всегда объект с полем type (Array либо Object)
-
-  const rootIsArray = root.type === 'Array';
-
-  if (rootIsArray) {
-    stack.push(...root.children);
-  } else {
-    stack.push(root);
-  }
-
-  while (stack.length !== 0) {
-    let node = stack.shift();
-    array.push(node);
-    const nodeMixins = getMixedASTBlocksOf(node);
-    array.push(...nodeMixins);
-    const nodeChildren = getChildASTBlocksIn(node);
-
-    if (nodeChildren.length === 0) {
-      continue;
-    } else {
-      stack.unshift(...nodeChildren);
-    }
-  }
-
-  return array;
 }
 
 function getASTContent(ASTObject) {
@@ -3637,6 +3586,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.getRoots = getRoots;
 exports.getGraphs = getGraphs;
 exports.findNodeIn = findNodeIn;
+exports.findRootBlocksWithName = findRootBlocksWithName;
 exports.findBlocksWithName = findBlocksWithName;
 exports.findRootBlocksWithModValue = findRootBlocksWithModValue;
 exports.findRootBlocksWithMod = findRootBlocksWithMod;
@@ -3644,6 +3594,10 @@ exports.findAllElementsInBlock = findAllElementsInBlock;
 exports.findChildBlocksPlacedBeforeOtherBlocks = findChildBlocksPlacedBeforeOtherBlocks;
 
 var _astService = require("./astService");
+
+const isBlock = node => node.block && !node.elem;
+
+const recognizer = (blockName, modName, modValue, ...[props]) => {};
 
 function getRoots(json) {
   if (json.length === 0) {
@@ -3713,7 +3667,7 @@ function getContentArrayOf(node) {
   if (Array.isArray(node)) {
     nodeContent = node;
   } else {
-    nodeContent = node.content ? [].concat(node.content) : null;
+    nodeContent = node.content ? [].concat(node.content) : [];
   }
 
   return nodeContent;
@@ -3721,28 +3675,51 @@ function getContentArrayOf(node) {
 /** 
  * Возвращает массив объектов объектов, удовлетворяющих nodeRecognizer, найденных в дереве.
  * 
- * ВНИМАНИЕ: функция работает с расчётом на то, что в дереве одинаковые блоки не будут вложены друг в друга. В такой ситуации будет найден только блок на верхнем уровне, а внутренние будут пропущены.
- * @param {(node: Object) => boolean} nodeRecognizer
+ * @param {recognizerFunction} nodeRecognizer
 */
 
 
 function findAllNodesIn(rootNode, nodeRecognizer = node => false) {
+  const foundNodes = [];
+
+  if (nodeRecognizer(rootNode)) {
+    foundNodes.push(rootNode);
+  }
+
+  const nodeContent = getContentArrayOf(rootNode);
+
+  if (!nodeContent.length) {
+    return foundNodes;
+  }
+
+  const elements = nodeContent.map(childNode => findAllNodesIn(childNode, nodeRecognizer));
+  foundNodes.push(...elements);
+  return foundNodes.flat(Infinity);
+}
+/** 
+ * Возвращает массив корневых объектов, удовлетворяющих nodeRecognizer, найденных в дереве.
+ * 
+ * @param {recognizerFunction} nodeRecognizer
+*/
+
+
+function findAllRootNodesIn(rootNode, nodeRecognizer = node => false) {
   if (nodeRecognizer(rootNode)) {
     return [rootNode];
   }
 
   const nodeContent = getContentArrayOf(rootNode);
 
-  if (!nodeContent) {
+  if (!nodeContent.length) {
     return [];
   }
 
-  const elements = nodeContent.map(childNode => findAllNodesIn(childNode, nodeRecognizer));
+  const elements = nodeContent.map(childNode => findAllRootNodesIn(childNode, nodeRecognizer));
   return elements.flat(Infinity);
 }
 /** 
  * Возвращает объект первой попавшегося в дереве объекта, удовлетворяющего nodeRecognizer.
- * @param {(node: Object) => boolean} nodeRecognizer
+ * @param {recognizerFunction} nodeRecognizer
 */
 
 
@@ -3771,14 +3748,24 @@ function findNodeIn(rootNode, nodeRecognizer = node => false) {
   return foundNode;
 }
 /** 
+ * Возвращает все корневые блоки с именем blockName
+*/
+
+
+function findRootBlocksWithName(rootNode, blockName) {
+  const blockRecognizer = node => node.block === blockName;
+
+  return findAllRootNodesIn(rootNode, blockRecognizer);
+}
+/** 
  * Возвращает все блоки с именем blockName
 */
 
 
 function findBlocksWithName(rootNode, blockName) {
-  const blockRecognizer = node => node.block === blockName;
+  const blockRecognizer = node => isBlock(node) && node.block === blockName;
 
-  return findAllNodesIn(rootNode, blockRecognizer);
+  return findAllRootNodesIn(rootNode, blockRecognizer);
 }
 /** 
  * Возвращает все блоки с модификатором modName, имеющим значение modValue
@@ -3791,7 +3778,7 @@ function findRootBlocksWithModValue(rootNode, blockName, modName, modValue) {
   return findAllNodesIn(rootNode, blockRecognizer);
 }
 /** 
- * Возвращает все блоки с модификатором modName
+ * Возвращает все блоки, у которых определен модификатор modName
 */
 
 
@@ -3812,8 +3799,8 @@ function findAllElementsInBlock(block, elemName) {
 }
 /** 
  * Возвращает массив дочерних для rootNode блоков, удовлетворяющих beforeBlockRecognizer и находящихся перед блоками, удовлетворяющими afterBlockRecognizer, на том же или более глубоком уровне вложенности.
- * @param {(node: Object) => boolean} beforeBlockRecognizer Selector for the element
- * @param {(node: Object) => boolean} afterBlockRecognizer Selector for the element
+ * @param {recognizerFunction} beforeBlockRecognizer
+ * @param {recognizerFunction} afterBlockRecognizer
 */
 
 
@@ -3837,8 +3824,8 @@ function findChildBlocksPlacedBeforeOtherBlocks(rootNode, beforeBlockRecognizer,
 }
 /** 
  * Возвращает массив блоков, удовлетворяющих beforeBlockRecognizer и afterBlockRecognizer и стоящих в порядке следования (как в структуре блока)
- * @param {(node: Object) => boolean} beforeBlockRecognizer Selector for the element
- * @param {(node: Object) => boolean} afterBlockRecognizer Selector for the element
+ * @param {recognizerFunction} beforeBlockRecognizer
+ * @param {recognizerFunction} afterBlockRecognizer
 */
 
 
