@@ -72,6 +72,53 @@ const testInputs = [
     }`,
     expectedErrors: 1
   },
+  {
+    json: `{
+      "block": "grid",
+      "mods": {
+          "m-columns": "10"
+      },
+      "content": [
+        {
+            "block": "grid",
+            "elem": "fraction",
+            "elemMods": {
+                "m-col": "6"
+            },
+            "content": [
+                {
+                    "block": "payment"
+                }
+            ]
+        },
+        {
+            "block": "grid",
+            "elem": "fraction",
+            "elemMods": {
+                "m-col": "2"
+            },
+            "content": [
+                {
+                    "block": "offer"
+                }
+            ]
+        },
+        {
+          "block": "grid",
+          "elem": "fraction",
+          "elemMods": {
+              "m-col": "2"
+          },
+          "content": [
+              {
+                  "block": "offer"
+              }
+          ]
+        }
+      ]
+    }`,
+    expectedErrors: 0
+  },
 ]
 
 export default function h2Position() {
