@@ -1,6 +1,6 @@
 import LinterError from '../errors/linterError';
 import warningErrors from '../errors/warning';
-import {findBlocksWithName} from '../../services/graphService';
+import {findRootBlocksWithName} from '../../services/graphService';
 
 const isButtonSizeValid = (buttonSize, referenceSize) => {
   let properButtonSize = '';
@@ -26,8 +26,8 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
 }
 
 function checkButtonSize(warningBlock) {
-  const buttons = findBlocksWithName(warningBlock, 'button');
-  const textBlocks = findBlocksWithName(warningBlock, 'text');
+  const buttons = findRootBlocksWithName(warningBlock, 'button');
+  const textBlocks = findRootBlocksWithName(warningBlock, 'text');
 
   if (textBlocks.length < 1 || buttons.length < 1) {
     return [];

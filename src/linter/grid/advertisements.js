@@ -4,7 +4,6 @@ import {findAllElementsInBlock, findNodeIn} from '../../services/graphService';
 import {marketing} from '../enums/contentBlocks';
 
 function checkAds(gridBlock) {
-
   const columnsCount = parseInt(gridBlock.mods['m-columns'], 10);
 
   const columnBlocks = findAllElementsInBlock(gridBlock, 'fraction');

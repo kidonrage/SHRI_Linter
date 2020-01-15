@@ -84,7 +84,7 @@ function getContentArrayOf(node) {
   if (Array.isArray(node)) {
     nodeContent = node;
   } else {
-    nodeContent = node.content ? [].concat(node.content) : null
+    nodeContent = node.content ? [].concat(node.content) : [];
   }
 
   return nodeContent;
@@ -93,21 +93,44 @@ function getContentArrayOf(node) {
 /** 
  * Возвращает массив объектов объектов, удовлетворяющих nodeRecognizer, найденных в дереве.
  * 
- * ВНИМАНИЕ: функция работает с расчётом на то, что в дереве одинаковые блоки не будут вложены друг в друга. В такой ситуации будет найден только блок на верхнем уровне, а внутренние будут пропущены.
  * @param {recognizerFunction} nodeRecognizer
 */
 function findAllNodesIn(rootNode, nodeRecognizer = (node) => false) {
+  const foundNodes = [];
+
+  if (nodeRecognizer(rootNode)) {
+    foundNodes.push(rootNode);
+  }
+
+  const nodeContent = getContentArrayOf(rootNode);
+
+  if (!nodeContent.length) {
+    return foundNodes;
+  }
+
+  const elements = nodeContent.map(childNode => findAllNodesIn(childNode, nodeRecognizer));
+  foundNodes.push(...elements);
+
+  return foundNodes.flat(Infinity);
+}
+
+/** 
+ * Возвращает массив корневых объектов, удовлетворяющих nodeRecognizer, найденных в дереве.
+ * 
+ * @param {recognizerFunction} nodeRecognizer
+*/
+function findAllRootNodesIn(rootNode, nodeRecognizer = (node) => false) {
   if (nodeRecognizer(rootNode)) {
     return [rootNode];
   }
 
   const nodeContent = getContentArrayOf(rootNode);
 
-  if (!nodeContent) {
+  if (!nodeContent.length) {
     return [];
   }
 
-  const elements = nodeContent.map(childNode => findAllNodesIn(childNode, nodeRecognizer));
+  const elements = nodeContent.map(childNode => findAllRootNodesIn(childNode, nodeRecognizer));
 
   return elements.flat(Infinity);
 }
@@ -145,10 +168,10 @@ export function findNodeIn(rootNode, nodeRecognizer = (node) => false) {
 /** 
  * Возвращает все блоки с именем blockName
 */
-export function findBlocksWithName(rootNode, blockName) {
+export function findRootBlocksWithName(rootNode, blockName) {
   const blockRecognizer = (node) => node.block === blockName;
 
-  return findAllNodesIn(rootNode, blockRecognizer);
+  return findAllRootNodesIn(rootNode, blockRecognizer);
 }
 
 /** 

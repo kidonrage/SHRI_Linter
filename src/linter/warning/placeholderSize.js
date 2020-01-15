@@ -1,10 +1,10 @@
 import LinterError from '../errors/linterError';
 import warningErrors from '../errors/warning';
-import {findBlocksWithName} from '../../services/graphService';
+import {findRootBlocksWithName} from '../../services/graphService';
 import {placeholderSizes} from '../enums/sizes';
 
 function checkPlaceholderSize(warningBlock) {
-  const placeholders = findBlocksWithName(warningBlock, 'placeholder');
+  const placeholders = findRootBlocksWithName(warningBlock, 'placeholder');
 
   if (placeholders.length === 0) {
     return []
