@@ -23,7 +23,7 @@ function checkTextDifference(warningBlock) {
     return []
   }
 
-  return LinterError.getErrorsForBlocks(warningErrors.textSize, invalidBlocks);
+  return LinterError.getErrorsForBlocksWithOneLocation(warningErrors.textSize, invalidBlocks, warningBlock);
 }
 
 export default checkTextDifference;

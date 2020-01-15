@@ -2844,6 +2844,13 @@ class LinterError {
     });
   }
 
+  static getErrorsForBlocksWithOneLocation(errorInfo, errorBlocksArr, locReferenceBlock) {
+    return errorBlocksArr.map(errorBlock => {
+      const error = new LinterError(errorInfo, locReferenceBlock);
+      return error;
+    });
+  }
+
 }
 
 exports.default = LinterError;
@@ -3403,7 +3410,7 @@ function checkTextDifference(warningBlock) {
     return [];
   }
 
-  return _linterError.default.getErrorsForBlocks(_warning.default.textSize, invalidBlocks);
+  return _linterError.default.getErrorsForBlocksWithOneLocation(_warning.default.textSize, invalidBlocks, warningBlock);
 }
 
 var _default = checkTextDifference;
