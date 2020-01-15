@@ -2762,14 +2762,14 @@ exports.default = lint;
 
 var _linter = _interopRequireDefault(require("./linter"));
 
-var _graphService = require("./services/graphService");
+var _jsonService = require("./services/jsonService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function lint(jsonString) {
   const linter = new _linter.default();
-  const rootGraphs = (0, _graphService.getGraphs)(jsonString);
-  const errors = linter.lint(rootGraphs);
+  const rootNodes = (0, _jsonService.getRootNodesFromJSON)(jsonString);
+  const errors = linter.lint(rootNodes);
   console.log('RESULT', errors);
   return errors;
 }
@@ -2777,7 +2777,7 @@ function lint(jsonString) {
 global.lint = lint;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./linter":11,"./services/graphService":24}],3:[function(require,module,exports){
+},{"./linter":11,"./services/jsonService":24}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2905,7 +2905,9 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _grid = _interopRequireDefault(require("../errors/grid"));
 
-var _graphService = require("../../services/graphService");
+var _nodeSearchService = require("../../services/nodeSearchService");
+
+var _nodeService = require("../../services/nodeService");
 
 var _contentBlocks = require("../enums/contentBlocks");
 
@@ -2913,10 +2915,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function checkAds(gridBlock) {
   const columnsCount = parseInt(gridBlock.mods['m-columns'], 10);
-  const columnBlocks = (0, _graphService.findAllElementsInBlock)(gridBlock, 'fraction');
+  const columnBlocks = (0, _nodeSearchService.findAllElementsInBlock)(gridBlock, 'fraction');
   const marketingBlocks = columnBlocks.map(column => {
     const columnSize = parseInt(column.elemMods['m-col'], 10);
-    const marketingNode = (0, _graphService.findNodeIn)(column, node => {
+    const marketingNode = (0, _nodeService.findNodeIn)(column, node => {
       const nodeBlockName = node.block;
       return _contentBlocks.marketing.includes(nodeBlockName);
     });
@@ -2943,7 +2945,7 @@ function checkAds(gridBlock) {
 var _default = checkAds;
 exports.default = _default;
 
-},{"../../services/graphService":24,"../enums/contentBlocks":3,"../errors/grid":5,"../errors/linterError":6}],10:[function(require,module,exports){
+},{"../../services/nodeSearchService":25,"../../services/nodeService":26,"../enums/contentBlocks":3,"../errors/grid":5,"../errors/linterError":6}],10:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2984,7 +2986,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-var _graphService = require("../services/graphService");
+var _nodeSearchService = require("../services/nodeSearchService");
 
 var _warning = _interopRequireDefault(require("./warning"));
 
@@ -3003,30 +3005,30 @@ class Linter {
     this.blocksToCheck = configuration.blocks;
   }
 
-  lint(graphs) {
-    if (graphs.length < 1) {
+  lint(rootNodes) {
+    if (rootNodes.length < 1) {
       return [];
     }
 
-    const errors = graphs.map(rootGraph => {
-      const graphErrors = this.blocksToCheck.map(blockName => {
-        return this[blockName](rootGraph);
+    const errors = rootNodes.map(rootNode => {
+      const nodeErrors = this.blocksToCheck.map(blockName => {
+        return this[blockName](rootNode);
       });
-      return [].concat(...graphErrors);
+      return [].concat(...nodeErrors);
     }); // 2d blocks errors array to 1d
 
     const flatErrors = [].concat(...errors).filter(error => error != null);
     return flatErrors;
   }
 
-  warning(graph) {
+  warning(rootNode) {
     const {
       textDifference,
       buttonSize,
       buttonPosition,
       placeholderSize
     } = _warning.default;
-    const warningBlocks = (0, _graphService.findRootBlocksWithName)(graph, 'warning');
+    const warningBlocks = (0, _nodeSearchService.findRootBlocksWithName)(rootNode, 'warning');
     const errors = warningBlocks.map(block => {
       const blockErrors = [...textDifference(block), ...buttonSize(block), ...buttonPosition(block), ...placeholderSize(block)];
       return blockErrors;
@@ -3034,21 +3036,21 @@ class Linter {
     return [].concat(...errors);
   }
 
-  text(graph) {
+  text(rootNode) {
     const {
       h1Severalty,
       h2Position,
       h3Position
     } = _text.default;
-    const errors = [...h1Severalty(graph), ...h2Position(graph), ...h3Position(graph)];
+    const errors = [...h1Severalty(rootNode), ...h2Position(rootNode), ...h3Position(rootNode)];
     return errors;
   }
 
-  grid(graph) {
+  grid(rootNode) {
     const {
       advertisements
     } = _grid.default;
-    const blocksToCheck = (0, _graphService.findRootBlocksWithName)(graph, 'grid');
+    const blocksToCheck = (0, _nodeSearchService.findRootBlocksWithName)(rootNode, 'grid');
     const errors = blocksToCheck.map(block => {
       return [advertisements(block)];
     });
@@ -3059,7 +3061,7 @@ class Linter {
 
 exports.default = Linter;
 
-},{"../services/graphService":24,"./grid":10,"./text":16,"./warning":20}],13:[function(require,module,exports){
+},{"../services/nodeSearchService":25,"./grid":10,"./text":16,"./warning":20}],13:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3071,12 +3073,12 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _text = _interopRequireDefault(require("../errors/text"));
 
-var _graphService = require("../../services/graphService");
+var _nodeSearchService = require("../../services/nodeSearchService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function checkH1Severalty(graph) {
-  const h1Headers = (0, _graphService.findRootBlocksWithModValue)(graph, 'text', 'type', 'h1');
+function checkH1Severalty(rootNode) {
+  const h1Headers = (0, _nodeSearchService.findBlocksWithModValue)(rootNode, 'text', 'type', 'h1');
 
   if (h1Headers.length < 1) {
     return [];
@@ -3098,7 +3100,7 @@ function checkH1Severalty(graph) {
 var _default = checkH1Severalty;
 exports.default = _default;
 
-},{"../../services/graphService":24,"../errors/linterError":6,"../errors/text":7}],14:[function(require,module,exports){
+},{"../../services/nodeSearchService":25,"../errors/linterError":6,"../errors/text":7}],14:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3112,12 +3114,12 @@ var _text = _interopRequireDefault(require("../errors/text"));
 
 var _recognizers = require("./recognizers");
 
-var _graphService = require("../../services/graphService");
+var _nodeSearchService = require("../../services/nodeSearchService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function checkH2Position(graph) {
-  const invalidH2Headers = (0, _graphService.findChildBlocksPlacedBeforeOtherBlocks)(graph, _recognizers.h2HeaderRecognizer, _recognizers.h1HeaderRecognizer);
+function checkH2Position(rootNode) {
+  const invalidH2Headers = (0, _nodeSearchService.findChildBlocksPlacedBeforeOtherBlocks)(rootNode, _recognizers.h2HeaderRecognizer, _recognizers.h1HeaderRecognizer);
   const isPositionValid = invalidH2Headers.length === 0;
 
   if (!isPositionValid) {
@@ -3134,7 +3136,7 @@ function checkH2Position(graph) {
 var _default = checkH2Position;
 exports.default = _default;
 
-},{"../../services/graphService":24,"../errors/linterError":6,"../errors/text":7,"./recognizers":17}],15:[function(require,module,exports){
+},{"../../services/nodeSearchService":25,"../errors/linterError":6,"../errors/text":7,"./recognizers":17}],15:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3148,12 +3150,12 @@ var _text = _interopRequireDefault(require("../errors/text"));
 
 var _recognizers = require("./recognizers");
 
-var _graphService = require("../../services/graphService");
+var _nodeSearchService = require("../../services/nodeSearchService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function checkH3Position(graph) {
-  const invalidH3Headers = (0, _graphService.findChildBlocksPlacedBeforeOtherBlocks)(graph, _recognizers.h3HeaderRecognizer, _recognizers.h2HeaderRecognizer);
+function checkH3Position(rootNode) {
+  const invalidH3Headers = (0, _nodeSearchService.findChildBlocksPlacedBeforeOtherBlocks)(rootNode, _recognizers.h3HeaderRecognizer, _recognizers.h2HeaderRecognizer);
   const isPositionValid = invalidH3Headers.length === 0;
 
   if (!isPositionValid) {
@@ -3170,7 +3172,7 @@ function checkH3Position(graph) {
 var _default = checkH3Position;
 exports.default = _default;
 
-},{"../../services/graphService":24,"../errors/linterError":6,"../errors/text":7,"./recognizers":17}],16:[function(require,module,exports){
+},{"../../services/nodeSearchService":25,"../errors/linterError":6,"../errors/text":7,"./recognizers":17}],16:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3202,27 +3204,16 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.h3HeaderRecognizer = exports.h2HeaderRecognizer = exports.h1HeaderRecognizer = void 0;
 
-const textModRecognizer = (block, modName, modValue) => {
-  if (!block.mods) {
-    return false;
-  }
+var _nodeService = require("../../services/nodeService");
 
-  return block.block === 'text' && block.mods[modName] === modValue;
-};
-
-const h1HeaderRecognizer = block => textModRecognizer(block, 'type', 'h1');
-
+const h1HeaderRecognizer = (0, _nodeService.nodeRecognizer)('text', 'type', 'h1');
 exports.h1HeaderRecognizer = h1HeaderRecognizer;
-
-const h2HeaderRecognizer = block => textModRecognizer(block, 'type', 'h2');
-
+const h2HeaderRecognizer = (0, _nodeService.nodeRecognizer)('text', 'type', 'h2');
 exports.h2HeaderRecognizer = h2HeaderRecognizer;
-
-const h3HeaderRecognizer = block => textModRecognizer(block, 'type', 'h3');
-
+const h3HeaderRecognizer = (0, _nodeService.nodeRecognizer)('text', 'type', 'h3');
 exports.h3HeaderRecognizer = h3HeaderRecognizer;
 
-},{}],18:[function(require,module,exports){
+},{"../../services/nodeService":26}],18:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3234,7 +3225,7 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _warning = _interopRequireDefault(require("../errors/warning"));
 
-var _graphService = require("../../services/graphService");
+var _nodeSearchService = require("../../services/nodeSearchService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -3247,7 +3238,7 @@ const placeholderRecognizer = block => {
 };
 
 function checkButtonPosition(warningBlock) {
-  const invalidButtons = (0, _graphService.findChildBlocksPlacedBeforeOtherBlocks)(warningBlock, buttonRecognizer, placeholderRecognizer);
+  const invalidButtons = (0, _nodeSearchService.findChildBlocksPlacedBeforeOtherBlocks)(warningBlock, buttonRecognizer, placeholderRecognizer);
   const isButtonsValid = invalidButtons.length === 0;
 
   if (!isButtonsValid) {
@@ -3264,7 +3255,7 @@ function checkButtonPosition(warningBlock) {
 var _default = checkButtonPosition;
 exports.default = _default;
 
-},{"../../services/graphService":24,"../errors/linterError":6,"../errors/warning":8}],19:[function(require,module,exports){
+},{"../../services/nodeSearchService":25,"../errors/linterError":6,"../errors/warning":8}],19:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3276,7 +3267,7 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _warning = _interopRequireDefault(require("../errors/warning"));
 
-var _graphService = require("../../services/graphService");
+var _nodeSearchService = require("../../services/nodeSearchService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -3308,8 +3299,8 @@ const isButtonSizeValid = (buttonSize, referenceSize) => {
 };
 
 function checkButtonSize(warningBlock) {
-  const buttons = (0, _graphService.findRootBlocksWithName)(warningBlock, 'button');
-  const textBlocks = (0, _graphService.findRootBlocksWithName)(warningBlock, 'text');
+  const buttons = (0, _nodeSearchService.findRootBlocksWithName)(warningBlock, 'button');
+  const textBlocks = (0, _nodeSearchService.findRootBlocksWithName)(warningBlock, 'text');
 
   if (textBlocks.length < 1 || buttons.length < 1) {
     return [];
@@ -3349,7 +3340,7 @@ function checkButtonSize(warningBlock) {
 var _default = checkButtonSize;
 exports.default = _default;
 
-},{"../../services/graphService":24,"../errors/linterError":6,"../errors/warning":8}],20:[function(require,module,exports){
+},{"../../services/nodeSearchService":25,"../errors/linterError":6,"../errors/warning":8}],20:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3388,14 +3379,14 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _warning = _interopRequireDefault(require("../errors/warning"));
 
-var _graphService = require("../../services/graphService");
+var _nodeSearchService = require("../../services/nodeSearchService");
 
 var _sizes = require("../enums/sizes");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkPlaceholderSize(warningBlock) {
-  const placeholders = (0, _graphService.findRootBlocksWithName)(warningBlock, 'placeholder');
+  const placeholders = (0, _nodeSearchService.findRootBlocksWithName)(warningBlock, 'placeholder');
 
   if (placeholders.length === 0) {
     return [];
@@ -3424,7 +3415,7 @@ function checkPlaceholderSize(warningBlock) {
 var _default = checkPlaceholderSize;
 exports.default = _default;
 
-},{"../../services/graphService":24,"../enums/sizes":4,"../errors/linterError":6,"../errors/warning":8}],22:[function(require,module,exports){
+},{"../../services/nodeSearchService":25,"../enums/sizes":4,"../errors/linterError":6,"../errors/warning":8}],22:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3436,12 +3427,12 @@ var _linterError = _interopRequireDefault(require("../errors/linterError"));
 
 var _warning = _interopRequireDefault(require("../errors/warning"));
 
-var _graphService = require("../../services/graphService");
+var _nodeSearchService = require("../../services/nodeSearchService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function checkTextDifference(warningBlock) {
-  const textBlocks = (0, _graphService.findRootBlocksWithName)(warningBlock, 'text');
+  const textBlocks = (0, _nodeSearchService.findRootBlocksWithName)(warningBlock, 'text');
   const textBlocksWithSize = textBlocks.filter(block => {
     if (!block.mods) {
       return false;
@@ -3477,7 +3468,7 @@ function checkTextDifference(warningBlock) {
 var _default = checkTextDifference;
 exports.default = _default;
 
-},{"../../services/graphService":24,"../errors/linterError":6,"../errors/warning":8}],23:[function(require,module,exports){
+},{"../../services/nodeSearchService":25,"../errors/linterError":6,"../errors/warning":8}],23:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3491,38 +3482,12 @@ var _jsonToAst = _interopRequireDefault(require("json-to-ast"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+// *** Функции для работы с AST ***
 const findPropertyIn = (astObject, propertyName) => {
   return astObject.children.find(child => {
     return child.key && child.key.value === propertyName;
   });
 };
-
-const isBlock = node => {
-  const contentProperty = findPropertyIn(node, 'content');
-
-  if (contentProperty) {
-    return true;
-  }
-
-  const blockProperty = findPropertyIn(node, 'block');
-  const elemProperty = findPropertyIn(node, 'elem');
-  return blockProperty && !elemProperty;
-};
-
-function getMixedASTBlocksOf(node) {
-  const mixProperty = findPropertyIn(node, 'mix');
-
-  if (!mixProperty) {
-    return [];
-  }
-
-  const mixValue = mixProperty.value;
-  let mixedNodes = mixValue.type === 'Array' ? mixValue.children : [].concat(mixValue);
-  const mixedBlocks = mixedNodes.filter(mixin => {
-    return isBlock(mixin);
-  });
-  return mixedBlocks;
-}
 
 function getASTContent(ASTObject) {
   const contentProperty = findPropertyIn(ASTObject, 'content');
@@ -3534,6 +3499,10 @@ function getASTContent(ASTObject) {
   const ASTContent = contentProperty.value;
   return ASTContent;
 }
+/** 
+ * Возвращает все корневые ноды в JSON в виде AST-объектов
+*/
+
 
 function getASTRoots(json) {
   let astRootObject = {};
@@ -3553,6 +3522,10 @@ function getASTRoots(json) {
   });
   return roots;
 }
+/** 
+ * Возвращает отформатированную локацию AST-объекта
+*/
+
 
 const parseASTLocation = ASTBlock => {
   const {
@@ -3583,21 +3556,32 @@ exports.parseASTLocation = parseASTLocation;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getRoots = getRoots;
-exports.getGraphs = getGraphs;
-exports.findNodeIn = findNodeIn;
-exports.findRootBlocksWithName = findRootBlocksWithName;
-exports.findBlocksWithName = findBlocksWithName;
-exports.findRootBlocksWithModValue = findRootBlocksWithModValue;
-exports.findRootBlocksWithMod = findRootBlocksWithMod;
-exports.findAllElementsInBlock = findAllElementsInBlock;
-exports.findChildBlocksPlacedBeforeOtherBlocks = findChildBlocksPlacedBeforeOtherBlocks;
+exports.getRootNodesFromJSON = getRootNodesFromJSON;
 
 var _astService = require("./astService");
 
-const isBlock = node => node.block && !node.elem;
+// *** Функции, задействованные в JSON-парсинге ***
 
-const recognizer = (blockName, modName, modValue, ...[props]) => {};
+/** 
+ * Возвращает все корневые ноды в JSON
+*/
+function getRootNodesFromJSON(json) {
+  // Если в входящем json массив, нужно вернуть массив корневых объектов
+  const roots = getRoots(json);
+
+  if (roots.length === 0) {
+    return [];
+  }
+
+  const ASTRoots = (0, _astService.getASTRoots)(json);
+  console.log(roots.length, ASTRoots.length);
+  const rootsWithLocation = roots.map((rootObj, index) => {
+    const rootASTObj = ASTRoots[index];
+    const rootObjWithLoc = applyServiceData(rootObj, rootASTObj);
+    return rootObjWithLoc;
+  });
+  return rootsWithLocation;
+}
 
 function getRoots(json) {
   if (json.length === 0) {
@@ -3614,24 +3598,6 @@ function getRoots(json) {
   }
 
   return roots;
-}
-
-function getGraphs(json) {
-  // Если в входящем json массив, нужно вернуть массив корневых объектов
-  const roots = getRoots(json);
-
-  if (roots.length === 0) {
-    return [];
-  }
-
-  const ASTRoots = (0, _astService.getASTRoots)(json);
-  console.log(roots.length, ASTRoots.length);
-  const graphs = roots.map((rootObj, index) => {
-    const rootASTObj = ASTRoots[index];
-    const rootObjWithLoc = applyServiceData(rootObj, rootASTObj);
-    return rootObjWithLoc;
-  });
-  return graphs;
 } // Инъекцирует данные о локации и глубине вложенности
 
 
@@ -3661,6 +3627,132 @@ function applyServiceData(block, ASTBlock, depth = 0) {
   return result;
 }
 
+},{"./astService":23}],25:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.findRootBlocksWithName = findRootBlocksWithName;
+exports.findBlocksWithName = findBlocksWithName;
+exports.findRootBlocksWithModValue = findRootBlocksWithModValue;
+exports.findBlocksWithModValue = findBlocksWithModValue;
+exports.findRootBlocksWithMod = findRootBlocksWithMod;
+exports.findBlocksWithMod = findBlocksWithMod;
+exports.findAllElementsInBlock = findAllElementsInBlock;
+exports.findChildBlocksPlacedBeforeOtherBlocks = findChildBlocksPlacedBeforeOtherBlocks;
+
+var _nodeService = require("./nodeService");
+
+// *** "высокоуровневые" функции для поиска по нодам ***
+
+/** 
+ * Возвращает все корневые блоки с именем blockName
+*/
+function findRootBlocksWithName(rootNode, blockName) {
+  const blockRecognizer = (0, _nodeService.nodeRecognizer)(blockName);
+  return (0, _nodeService.findAllRootNodesIn)(rootNode, blockRecognizer);
+}
+/** 
+ * Возвращает все блоки с именем blockName
+*/
+
+
+function findBlocksWithName(rootNode, blockName) {
+  const blockRecognizer = (0, _nodeService.nodeRecognizer)(blockName);
+  return (0, _nodeService.findAllNodesIn)(rootNode, blockRecognizer);
+}
+/** 
+ * Возвращает все корневые блоки с модификатором modName, имеющим значение modValue
+*/
+
+
+function findRootBlocksWithModValue(rootNode, blockName, modName, modValue) {
+  const blockRecognizer = (0, _nodeService.nodeRecognizer)(blockName, modName, modValue);
+  return (0, _nodeService.findAllRootNodesIn)(rootNode, blockRecognizer);
+}
+/** 
+ * Возвращает все блоки с модификатором modName, имеющим значение modValue
+*/
+
+
+function findBlocksWithModValue(rootNode, blockName, modName, modValue) {
+  const blockRecognizer = (0, _nodeService.nodeRecognizer)(blockName, modName, modValue);
+  return (0, _nodeService.findAllNodesIn)(rootNode, blockRecognizer);
+}
+/** 
+ * Возвращает все блоки, у которых определен модификатор modName
+*/
+
+
+function findRootBlocksWithMod(rootNode, blockName, modName) {
+  const blockRecognizer = (0, _nodeService.nodeRecognizer)(blockName, modName);
+  return (0, _nodeService.findAllRootNodesIn)(rootNode, blockRecognizer);
+}
+/** 
+ * Возвращает все блоки, у которых определен модификатор modName
+*/
+
+
+function findBlocksWithMod(rootNode, blockName, modName) {
+  const blockRecognizer = (0, _nodeService.nodeRecognizer)(blockName, modName);
+  return (0, _nodeService.findAllNodesIn)(rootNode, blockRecognizer);
+}
+/** 
+ * Возвращает все элементы elemName в блоке
+*/
+
+
+function findAllElementsInBlock(block, elemName) {
+  const elementRecognizer = (0, _nodeService.nodeRecognizer)(null, null, null, {
+    elem: elemName
+  });
+  return (0, _nodeService.findAllNodesIn)(block, elementRecognizer);
+}
+/** 
+ * Возвращает массив дочерних для rootNode блоков, удовлетворяющих beforeBlockRecognizer и находящихся перед блоками, удовлетворяющими afterBlockRecognizer, на том же или более глубоком уровне вложенности.
+ * @param {recognizerFunction} beforeBlockRecognizer
+ * @param {recognizerFunction} afterBlockRecognizer
+*/
+
+
+function findChildBlocksPlacedBeforeOtherBlocks(rootNode, beforeBlockRecognizer, afterBlockRecognizer) {
+  if (afterBlockRecognizer(rootNode) || beforeBlockRecognizer(rootNode)) {
+    return [];
+  }
+
+  ;
+  const recognizedBlocks = (0, _nodeService.flatArrayOfBeforeAndAfterBlocks)(rootNode, beforeBlockRecognizer, afterBlockRecognizer);
+  const beforeBlocks = recognizedBlocks.filter(block => beforeBlockRecognizer(block));
+  const afterBlocks = recognizedBlocks.filter(block => afterBlockRecognizer(block));
+  let result = [];
+  afterBlocks.forEach(referenceBlock => {
+    const blocksBeforeReferenceBlock = beforeBlocks.filter(beforeBlock => {
+      return recognizedBlocks.indexOf(beforeBlock) < recognizedBlocks.indexOf(referenceBlock) && beforeBlock.depth <= referenceBlock.depth;
+    });
+    result = [...result, ...blocksBeforeReferenceBlock];
+  });
+  return result;
+}
+
+},{"./nodeService":26}],26:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getContentArrayOf = getContentArrayOf;
+exports.findAllNodesIn = findAllNodesIn;
+exports.findAllRootNodesIn = findAllRootNodesIn;
+exports.findNodeIn = findNodeIn;
+exports.flatArrayOfBeforeAndAfterBlocks = flatArrayOfBeforeAndAfterBlocks;
+exports.nodeRecognizer = exports.isBlock = void 0;
+
+// *** Функции для работы с нодами ***
+
+/** 
+ * Возвращает контент ноды в виде массива.
+*/
 function getContentArrayOf(node) {
   let nodeContent = [];
 
@@ -3673,11 +3765,74 @@ function getContentArrayOf(node) {
   return nodeContent;
 }
 /** 
+ * Возвращает true, если нода - блок.
+*/
+
+
+const isBlock = node => node.block && !node.elem;
+/** 
+ * Возвращает функцию-recognizer для нод.
+*/
+
+
+exports.isBlock = isBlock;
+
+const nodeRecognizer = (blockName, modName, modValue, ...otherProperties) => {
+  if (!arguments.length) {
+    return () => true;
+  }
+
+  const recognizers = [];
+
+  if (blockName) {
+    const blockRecognizer = node => node.block === blockName;
+
+    recognizers.push(blockRecognizer);
+  }
+
+  if (modName) {
+    const modRecognizer = modValue ? node => node.mods && node.mods[modName] === modValue : node => node.mods && node.mods[modName] ? true : false;
+    recognizers.push(modRecognizer);
+  }
+
+  if (otherProperties.length) {
+    otherProperties.forEach(property => {
+      if (typeof property !== 'object' || !property) {
+        return;
+      }
+
+      const propertyKey = Object.keys(property)[0];
+      const propertyValue = property[propertyKey];
+      const propertyRecognizer = propertyValue ? node => node[propertyKey] === propertyValue : node => node[propertyKey] ? true : false;
+      recognizers.push(propertyRecognizer);
+    });
+  } // Если какой-то из recognizer'ов не прошел, функция вернет false. В противном случае - true
+
+
+  return node => {
+    let isPassedWholeRecognizer = true;
+
+    for (let i = 0; i < recognizers.length; i++) {
+      const recognizer = recognizers[i];
+      const isPassedRecognizer = recognizer(node);
+
+      if (!isPassedRecognizer) {
+        isPassedWholeRecognizer = false;
+        break;
+      }
+    }
+
+    return isPassedWholeRecognizer;
+  };
+};
+/** 
  * Возвращает массив объектов объектов, удовлетворяющих nodeRecognizer, найденных в дереве.
  * 
  * @param {recognizerFunction} nodeRecognizer
 */
 
+
+exports.nodeRecognizer = nodeRecognizer;
 
 function findAllNodesIn(rootNode, nodeRecognizer = node => false) {
   const foundNodes = [];
@@ -3703,8 +3858,12 @@ function findAllNodesIn(rootNode, nodeRecognizer = node => false) {
 */
 
 
-function findAllRootNodesIn(rootNode, nodeRecognizer = node => false) {
-  if (nodeRecognizer(rootNode)) {
+function findAllRootNodesIn(rootNode, nodeRecognizerFunc) {
+  if (!nodeRecognizerFunc) {
+    return;
+  }
+
+  if (nodeRecognizerFunc(rootNode)) {
     return [rootNode];
   }
 
@@ -3714,7 +3873,7 @@ function findAllRootNodesIn(rootNode, nodeRecognizer = node => false) {
     return [];
   }
 
-  const elements = nodeContent.map(childNode => findAllRootNodesIn(childNode, nodeRecognizer));
+  const elements = nodeContent.map(childNode => findAllRootNodesIn(childNode, nodeRecognizerFunc));
   return elements.flat(Infinity);
 }
 /** 
@@ -3723,7 +3882,11 @@ function findAllRootNodesIn(rootNode, nodeRecognizer = node => false) {
 */
 
 
-function findNodeIn(rootNode, nodeRecognizer = node => false) {
+function findNodeIn(rootNode, nodeRecognizer) {
+  if (!nodeRecognizer) {
+    return;
+  }
+
   if (nodeRecognizer(rootNode)) {
     return rootNode;
   }
@@ -3746,81 +3909,6 @@ function findNodeIn(rootNode, nodeRecognizer = node => false) {
   }
 
   return foundNode;
-}
-/** 
- * Возвращает все корневые блоки с именем blockName
-*/
-
-
-function findRootBlocksWithName(rootNode, blockName) {
-  const blockRecognizer = node => node.block === blockName;
-
-  return findAllRootNodesIn(rootNode, blockRecognizer);
-}
-/** 
- * Возвращает все блоки с именем blockName
-*/
-
-
-function findBlocksWithName(rootNode, blockName) {
-  const blockRecognizer = node => isBlock(node) && node.block === blockName;
-
-  return findAllRootNodesIn(rootNode, blockRecognizer);
-}
-/** 
- * Возвращает все блоки с модификатором modName, имеющим значение modValue
-*/
-
-
-function findRootBlocksWithModValue(rootNode, blockName, modName, modValue) {
-  const blockRecognizer = node => node.block === blockName && node.mods && node.mods[modName] === modValue;
-
-  return findAllNodesIn(rootNode, blockRecognizer);
-}
-/** 
- * Возвращает все блоки, у которых определен модификатор modName
-*/
-
-
-function findRootBlocksWithMod(rootNode, blockName, modName) {
-  const blockRecognizer = node => node.block === blockName && node.mods && node.mods[modName];
-
-  return findAllNodesIn(rootNode, blockRecognizer);
-}
-/** 
- * Возвращает все элементы elemName в блоке
-*/
-
-
-function findAllElementsInBlock(block, elemName) {
-  return findAllNodesIn(block, node => {
-    return node.elem === elemName;
-  });
-}
-/** 
- * Возвращает массив дочерних для rootNode блоков, удовлетворяющих beforeBlockRecognizer и находящихся перед блоками, удовлетворяющими afterBlockRecognizer, на том же или более глубоком уровне вложенности.
- * @param {recognizerFunction} beforeBlockRecognizer
- * @param {recognizerFunction} afterBlockRecognizer
-*/
-
-
-function findChildBlocksPlacedBeforeOtherBlocks(rootNode, beforeBlockRecognizer, afterBlockRecognizer) {
-  if (afterBlockRecognizer(rootNode) || beforeBlockRecognizer(rootNode)) {
-    return [];
-  }
-
-  ;
-  const recognizedBlocks = flatArrayOfBeforeAndAfterBlocks(rootNode, beforeBlockRecognizer, afterBlockRecognizer);
-  const beforeBlocks = recognizedBlocks.filter(block => beforeBlockRecognizer(block));
-  const afterBlocks = recognizedBlocks.filter(block => afterBlockRecognizer(block));
-  let result = [];
-  afterBlocks.forEach(referenceBlock => {
-    const blocksBeforeReferenceBlock = beforeBlocks.filter(beforeBlock => {
-      return recognizedBlocks.indexOf(beforeBlock) < recognizedBlocks.indexOf(referenceBlock) && beforeBlock.depth <= referenceBlock.depth;
-    });
-    result = [...result, ...blocksBeforeReferenceBlock];
-  });
-  return result;
 }
 /** 
  * Возвращает массив блоков, удовлетворяющих beforeBlockRecognizer и afterBlockRecognizer и стоящих в порядке следования (как в структуре блока)
@@ -3851,4 +3939,4 @@ function flatArrayOfBeforeAndAfterBlocks(rootNode, beforeBlockRecognizer, afterB
   return result.flat(Infinity);
 }
 
-},{"./astService":23}]},{},[2]);
+},{}]},{},[2]);
