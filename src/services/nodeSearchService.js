@@ -1,3 +1,5 @@
+// *** "высокоуровневые" функции для поиска по нодам ***
+
 import {nodeRecognizer, findAllRootNodesIn, findAllNodesIn, flatArrayOfBeforeAndAfterBlocks} from './nodeService';
 
 /** 

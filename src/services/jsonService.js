@@ -1,3 +1,5 @@
+// *** Функции, задействованные в JSON-парсинге ***
+
 import {getASTRoots, getASTContent, parseASTLocation} from './astService';
 
 /** 

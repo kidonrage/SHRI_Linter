@@ -1,40 +1,11 @@
+// *** Функции для работы с AST ***
+
 import parseToAST from 'json-to-ast';
 
 const findPropertyIn = (astObject, propertyName) => {
   return astObject.children.find((child) => {
     return child.key && child.key.value === propertyName
   });
-}
-
-const isBlock = (node) => {
-  const contentProperty = findPropertyIn(node, 'content');
-
-  if (contentProperty) {
-    return true;
-  }
-
-  const blockProperty = findPropertyIn(node, 'block');
-  const elemProperty = findPropertyIn(node, 'elem');
-
-  return blockProperty && !elemProperty
-}
-
-function getMixedASTBlocksOf(node) {
-  const mixProperty = findPropertyIn(node, 'mix')
-
-  if (!mixProperty) {
-    return [];
-  }
-
-  const mixValue = mixProperty.value
-
-  let mixedNodes = mixValue.type === 'Array' ? mixValue.children : [].concat(mixValue);
-  
-  const mixedBlocks = mixedNodes.filter(mixin => {
-    return isBlock(mixin);
-  });
-
-  return mixedBlocks;
 }
 
 export function getASTContent(ASTObject) {
@@ -49,6 +20,9 @@ export function getASTContent(ASTObject) {
   return ASTContent;
 }
 
+/** 
+ * Возвращает все корневые ноды в JSON в виде AST-объектов
+*/
 export function getASTRoots(json) {
   let astRootObject = {}
   try {
@@ -69,6 +43,9 @@ export function getASTRoots(json) {
   return roots;
 }
 
+/** 
+ * Возвращает отформатированную локацию AST-объекта
+*/
 export const parseASTLocation = (ASTBlock) => {
   const {line: startLine, column: startColumn} = ASTBlock.loc.start;
   const {line: endLine, column: endColumn} = ASTBlock.loc.end;
