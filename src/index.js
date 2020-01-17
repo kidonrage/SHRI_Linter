@@ -1,7 +1,7 @@
 import Linter from './linter';
 import {getRootNodesFromJSON} from './services/jsonService';
 
-export default function lint(jsonString) {
+const lint = (jsonString) => {
   const linter = new Linter();
 
   const rootNodes = getRootNodesFromJSON(jsonString);
@@ -14,3 +14,5 @@ export default function lint(jsonString) {
 }
 
 global.lint = lint;
+
+export default lint;

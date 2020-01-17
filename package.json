@@ -2,8 +2,11 @@
   "name": "SHRI_Linter",
   "version": "1.0.0",
   "description": "Задание 2, ШРИ 2020",
-  "main": "lint.js",
+  "main": "build/lint.js",
   "scripts": {
+    "clean-dist": "rimraf dist build",
+    "build-lib": "npm run clean-dist && rollup -c",
+    "testing": "node testing/testing.js",
     "start": "nodemon --exec babel-node src/index.js",
     "build": "browserify src/index.js -o build/linter.js -t [ babelify ]",
     "test": "mocha tests/lint.js --require @babel/register --timeout 150000"
@@ -28,7 +31,14 @@
     "browserify": "^16.5.0",
     "chai": "^4.2.0",
     "mocha": "^7.0.0",
-    "nodemon": "^2.0.2"
+    "nodemon": "^2.0.2",
+    "rimraf": "^3.0.0",
+    "rollup": "^1.29.0",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-terser": "^5.2.0",
+    "webpack": "^4.41.5"
   },
   "dependencies": {
     "json-to-ast": "^2.1.0"

@@ -2758,7 +2758,7 @@ return parse$1;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = lint;
+exports.default = void 0;
 
 var _linter = _interopRequireDefault(require("./linter"));
 
@@ -2766,14 +2766,16 @@ var _jsonService = require("./services/jsonService");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function lint(jsonString) {
+const lint = jsonString => {
   const linter = new _linter.default();
   const rootNodes = (0, _jsonService.getRootNodesFromJSON)(jsonString);
   const errors = linter.lint(rootNodes);
   console.log('RESULT', errors);
   return errors;
-}
+};
 
+var _default = lint;
+exports.default = _default;
 global.lint = lint;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
@@ -3423,6 +3425,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.getASTContent = getASTContent;
+exports.getMixedASTBlocksOf = getMixedASTBlocksOf;
 exports.getASTRoots = getASTRoots;
 exports.parseASTLocation = void 0;
 
@@ -3446,6 +3449,21 @@ function getASTContent(ASTObject) {
 
   const ASTContent = contentProperty.value;
   return ASTContent;
+}
+
+function getMixedASTBlocksOf(node) {
+  const mixedBlocks = [];
+  const mixProperty = findPropertyIn(node, 'mix');
+
+  if (!mixProperty) {
+    return mixedBlocks;
+  }
+
+  const mixValue = mixProperty.value;
+  let mixedNodes = mixValue.type === 'Array' ? mixValue.children : [].concat(mixValue);
+  return mixedNodes.filter(mixin => {
+    return isBlock(mixin);
+  });
 }
 /** 
  * Возвращает все корневые ноды в JSON в виде AST-объектов
@@ -3476,23 +3494,17 @@ function getASTRoots(json) {
 
 
 const parseASTLocation = ASTBlock => {
+  // const {line: startLine, column: startColumn} = ASTBlock.loc.start;
+  // const {line: endLine, column: endColumn} = ASTBlock.loc.end;
   const {
-    line: startLine,
-    column: startColumn
-  } = ASTBlock.loc.start;
+    start
+  } = ASTBlock.loc;
   const {
-    line: endLine,
-    column: endColumn
-  } = ASTBlock.loc.end;
+    end
+  } = ASTBlock.loc;
   return {
-    start: {
-      line: startLine,
-      column: startColumn
-    },
-    end: {
-      line: endLine,
-      column: endColumn
-    }
+    start,
+    end
   };
 };
 
@@ -3556,6 +3568,8 @@ function applyServiceData(block, ASTBlock, depth = 0) {
     });
   }
 
+  const blockMixins = block.mix;
+  const ASTBlockMixins = (0, _astService.getMixedASTBlocksOf)(block);
   const blockContent = block.content;
 
   if (!blockContent) {
