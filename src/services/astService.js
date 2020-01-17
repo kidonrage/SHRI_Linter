@@ -20,6 +20,16 @@ export function getASTContent(ASTObject) {
   return ASTContent;
 }
 
+export function getASTMix(node) {
+  const mixProperty = findPropertyIn(node, 'mix')
+
+  if (!mixProperty) {
+    return null;
+  }
+
+  return mixProperty.value
+}
+
 /** 
  * Возвращает все корневые ноды в JSON в виде AST-объектов
 */
@@ -47,17 +57,13 @@ export function getASTRoots(json) {
  * Возвращает отформатированную локацию AST-объекта
 */
 export const parseASTLocation = (ASTBlock) => {
-  const {line: startLine, column: startColumn} = ASTBlock.loc.start;
-  const {line: endLine, column: endColumn} = ASTBlock.loc.end;
+  // const {line: startLine, column: startColumn} = ASTBlock.loc.start;
+  // const {line: endLine, column: endColumn} = ASTBlock.loc.end;
+  const {start} = ASTBlock.loc;
+  const {end} = ASTBlock.loc;
 
   return {
-    start: {
-      line: startLine,
-      column: startColumn
-    },
-    end: {
-      line: endLine,
-      column: endColumn
-    }
+    start,
+    end
   }
 }

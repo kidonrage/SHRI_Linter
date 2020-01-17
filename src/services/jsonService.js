@@ -1,6 +1,6 @@
 // *** Функции, задействованные в JSON-парсинге ***
 
-import {getASTRoots, getASTContent, parseASTLocation} from './astService';
+import {getASTRoots, getASTContent, parseASTLocation, getASTMix} from './astService';
 
 /** 
  * Возвращает все корневые ноды в JSON
@@ -51,26 +51,29 @@ function applyServiceData(block, ASTBlock, depth = 0) {
     })
   }
 
+  const result = {
+    ...block,
+    depth,
+    location: parseASTLocation(ASTBlock)
+  }
+
+  if (block.mix) {
+    const ASTMix = getASTMix(ASTBlock);
+    const mixWithLocation = applyServiceData(block.mix, ASTMix, depth);
+    result.mix = mixWithLocation
+  }
+  
+
   const blockContent = block.content;
 
   if (!blockContent) {
-    return {
-      ...block,
-      depth,
-      location: parseASTLocation(ASTBlock)
-    }
+    return result
   }
 
   const ASTBlockContent = getASTContent(ASTBlock);
-
   const contentWithLocation = applyServiceData(blockContent, ASTBlockContent, depth + 1);
 
-  let result = {
-    ...block,
-    depth,
-    content: contentWithLocation,
-    location: parseASTLocation(ASTBlock)
-  };
+  result.content = contentWithLocation;
 
   return result;
 }

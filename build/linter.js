@@ -2774,9 +2774,9 @@ const lint = jsonString => {
   return errors;
 };
 
+global.lint = lint;
 var _default = lint;
 exports.default = _default;
-global.lint = lint;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./linter":11,"./services/jsonService":24}],3:[function(require,module,exports){
@@ -3425,7 +3425,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.getASTContent = getASTContent;
-exports.getMixedASTBlocksOf = getMixedASTBlocksOf;
+exports.getASTMix = getASTMix;
 exports.getASTRoots = getASTRoots;
 exports.parseASTLocation = void 0;
 
@@ -3451,19 +3451,14 @@ function getASTContent(ASTObject) {
   return ASTContent;
 }
 
-function getMixedASTBlocksOf(node) {
-  const mixedBlocks = [];
+function getASTMix(node) {
   const mixProperty = findPropertyIn(node, 'mix');
 
   if (!mixProperty) {
-    return mixedBlocks;
+    return null;
   }
 
-  const mixValue = mixProperty.value;
-  let mixedNodes = mixValue.type === 'Array' ? mixValue.children : [].concat(mixValue);
-  return mixedNodes.filter(mixin => {
-    return isBlock(mixin);
-  });
+  return mixProperty.value;
 }
 /** 
  * Возвращает все корневые ноды в JSON в виде AST-объектов
@@ -3568,24 +3563,26 @@ function applyServiceData(block, ASTBlock, depth = 0) {
     });
   }
 
-  const blockMixins = block.mix;
-  const ASTBlockMixins = (0, _astService.getMixedASTBlocksOf)(block);
+  const result = { ...block,
+    depth,
+    location: (0, _astService.parseASTLocation)(ASTBlock)
+  };
+
+  if (block.mix) {
+    const ASTMix = (0, _astService.getASTMix)(ASTBlock);
+    const mixWithLocation = applyServiceData(block.mix, ASTMix, depth);
+    result.mix = mixWithLocation;
+  }
+
   const blockContent = block.content;
 
   if (!blockContent) {
-    return { ...block,
-      depth,
-      location: (0, _astService.parseASTLocation)(ASTBlock)
-    };
+    return result;
   }
 
   const ASTBlockContent = (0, _astService.getASTContent)(ASTBlock);
   const contentWithLocation = applyServiceData(blockContent, ASTBlockContent, depth + 1);
-  let result = { ...block,
-    depth,
-    content: contentWithLocation,
-    location: (0, _astService.parseASTLocation)(ASTBlock)
-  };
+  result.content = contentWithLocation;
   return result;
 }
 
@@ -3796,21 +3793,29 @@ const nodeRecognizer = (blockName, modName, modValue, ...otherProperties) => {
 
 exports.nodeRecognizer = nodeRecognizer;
 
-function findAllNodesIn(rootNode, nodeRecognizer = node => false) {
+function findAllNodesIn(rootNode, nodeRecognizer) {
+  if (!nodeRecognizer) {
+    return;
+  }
+
   const foundNodes = [];
 
   if (nodeRecognizer(rootNode)) {
     foundNodes.push(rootNode);
   }
 
-  const nodeContent = getContentArrayOf(rootNode);
-
-  if (!nodeContent.length) {
-    return foundNodes;
+  if (rootNode.mix) {
+    const foundMixedNodes = Array.isArray(rootNode.mix) ? rootNode.mix.map(mixedNode => findAllNodesIn(mixedNode, nodeRecognizer)) : findAllNodesIn(rootNode.mix, nodeRecognizer);
+    foundNodes.push(...foundMixedNodes);
   }
 
-  const elements = nodeContent.map(childNode => findAllNodesIn(childNode, nodeRecognizer));
-  foundNodes.push(...elements);
+  const nodeContent = getContentArrayOf(rootNode);
+
+  if (nodeContent.length) {
+    const foundContentNodes = nodeContent.map(childNode => findAllNodesIn(childNode, nodeRecognizer));
+    foundNodes.push(...foundContentNodes);
+  }
+
   return foundNodes.flat(Infinity);
 }
 /** 
@@ -3820,23 +3825,24 @@ function findAllNodesIn(rootNode, nodeRecognizer = node => false) {
 */
 
 
-function findAllRootNodesIn(rootNode, nodeRecognizerFunc) {
-  if (!nodeRecognizerFunc) {
+function findAllRootNodesIn(rootNode, nodeRecognizer) {
+  if (!nodeRecognizer) {
     return;
   }
 
-  if (nodeRecognizerFunc(rootNode)) {
+  if (nodeRecognizer(rootNode)) {
     return [rootNode];
   }
 
-  const nodeContent = getContentArrayOf(rootNode);
+  let foundMixedNodes = [];
 
-  if (!nodeContent.length) {
-    return [];
+  if (rootNode.mix) {
+    foundMixedNodes = Array.isArray(rootNode.mix) ? rootNode.mix.map(mixedNode => findAllRootNodesIn(mixedNode, nodeRecognizer)) : findAllRootNodesIn(rootNode.mix, nodeRecognizer);
   }
 
-  const elements = nodeContent.map(childNode => findAllRootNodesIn(childNode, nodeRecognizerFunc));
-  return elements.flat(Infinity);
+  const nodeContent = getContentArrayOf(rootNode);
+  const foundContentNodes = nodeContent.map(childNode => findAllRootNodesIn(childNode, nodeRecognizer));
+  return [...foundContentNodes.flat(Infinity), ...foundMixedNodes.flat(Infinity)];
 }
 /** 
  * Возвращает объект первой попавшегося в дереве объекта, удовлетворяющего nodeRecognizer.

@@ -82,21 +82,28 @@ export const nodeRecognizer = (blockName, modName, modValue, ...otherProperties)
  * 
  * @param {recognizerFunction} nodeRecognizer
 */
-export function findAllNodesIn(rootNode, nodeRecognizer = (node) => false) {
+export function findAllNodesIn(rootNode, nodeRecognizer) {
+  if (!nodeRecognizer) {
+    return;
+  }
+  
   const foundNodes = [];
 
   if (nodeRecognizer(rootNode)) {
     foundNodes.push(rootNode);
   }
 
-  const nodeContent = getContentArrayOf(rootNode);
-
-  if (!nodeContent.length) {
-    return foundNodes;
+  if (rootNode.mix) {
+    const foundMixedNodes = Array.isArray(rootNode.mix) ? rootNode.mix.map(mixedNode => findAllNodesIn(mixedNode, nodeRecognizer)) : findAllNodesIn(rootNode.mix, nodeRecognizer);
+    foundNodes.push(...foundMixedNodes);
   }
 
-  const elements = nodeContent.map(childNode => findAllNodesIn(childNode, nodeRecognizer));
-  foundNodes.push(...elements);
+  const nodeContent = getContentArrayOf(rootNode);
+
+  if (nodeContent.length) {
+    const foundContentNodes = nodeContent.map(childNode => findAllNodesIn(childNode, nodeRecognizer));
+    foundNodes.push(...foundContentNodes);
+  }
 
   return foundNodes.flat(Infinity);
 }
@@ -106,24 +113,24 @@ export function findAllNodesIn(rootNode, nodeRecognizer = (node) => false) {
  * 
  * @param {recognizerFunction} nodeRecognizer
 */
-export function findAllRootNodesIn(rootNode, nodeRecognizerFunc) {
-  if (!nodeRecognizerFunc) {
+export function findAllRootNodesIn(rootNode, nodeRecognizer) {
+  if (!nodeRecognizer) {
     return;
   }
 
-  if (nodeRecognizerFunc(rootNode)) {
+  if (nodeRecognizer(rootNode)) {
     return [rootNode];
   }
 
-  const nodeContent = getContentArrayOf(rootNode);
-
-  if (!nodeContent.length) {
-    return [];
+  let foundMixedNodes = [];
+  if (rootNode.mix) {
+    foundMixedNodes = Array.isArray(rootNode.mix) ? rootNode.mix.map(mixedNode => findAllRootNodesIn(mixedNode, nodeRecognizer)) : findAllRootNodesIn(rootNode.mix, nodeRecognizer);
   }
+  
+  const nodeContent = getContentArrayOf(rootNode);
+  const foundContentNodes = nodeContent.map(childNode => findAllRootNodesIn(childNode, nodeRecognizer));
 
-  const elements = nodeContent.map(childNode => findAllRootNodesIn(childNode, nodeRecognizerFunc));
-
-  return elements.flat(Infinity);
+  return [...foundContentNodes.flat(Infinity), ...foundMixedNodes.flat(Infinity)];
 }
 
 /** 
