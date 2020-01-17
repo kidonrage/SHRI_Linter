@@ -159,7 +159,7 @@ const testInputs = [
   },
   {
     json: productJSON,
-    expectedErrors: 1
+    expectedErrors: 2
   }
 ]
 
