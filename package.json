@@ -4,7 +4,7 @@
   "description": "Задание 2, ШРИ 2020",
   "main": "build/lint.js",
   "scripts": {
-    "clean-dist": "rimraf dist build",
+    "clean-dist": "rimraf dist",
     "build-lib": "npm run clean-dist && rollup -c",
     "testing": "node testing/testing.js",
     "start": "nodemon --exec babel-node src/index.js",
